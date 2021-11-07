@@ -1,5 +1,5 @@
 $(document).ready(
-    function() {
+    function () {
         $("#shortener").submit(
             function(event) {
                 event.preventDefault();
@@ -20,5 +20,31 @@ $(document).ready(
                             "<div class='alert alert-danger lead'>ERROR</div>");
                     }
                 });
+            }
+        );
+  
+        $("#infoShortUrl").submit(
+        function(event) {
+            event.preventDefault();
+            //alert($(this).serialize().split("tiny-").pop())
+            $.ajax({
+                type : "GET",
+                url : "/info/"+$(this).serialize().split("tiny-").pop(),
+                success : function(response) {
+                    $("#resultInfo").html(
+                        "<div class='alert alert-info lead'>"
+                        + "<p>" + "Total number of clicks: " + response.numClicks +"</p>"
+                        + "<p>" + "Date of creation: " + response.creationDate +"</p>"
+                        + "<p>" + "Target URL: " + response.uriDestino +"</p>"
+                        + "</div>"
+                    );
+                },
+                error : function() {
+                     $("#resultInfo").html(
+                        "<div class='alert alert-danger lead'>ERROR</div>");
+                }
             });
-    });
+        });
+    }
+    
+);
