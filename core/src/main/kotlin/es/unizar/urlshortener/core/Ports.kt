@@ -5,6 +5,9 @@ package es.unizar.urlshortener.core
  */
 interface ClickRepositoryService {
     fun save(cl: Click): Click
+    fun showAll(): List<Click>
+    //devuelve los clicks a ese hash
+    fun countByHash(hash: String): Int 
 }
 
 /**
@@ -12,7 +15,9 @@ interface ClickRepositoryService {
  */
 interface ShortUrlRepositoryService {
     fun findByKey(id: String): ShortUrl?
+    //se podría haber llamado addShortUrl para diferenciarlo un poco del save que nos da el JPArepository
     fun save(su: ShortUrl): ShortUrl
+    fun showAll(): List<ShortUrl>
 }
 
 /**
@@ -32,3 +37,12 @@ interface ValidatorService {
 interface HashService {
     fun hasUrl(url: String): String
 }
+
+/**
+ * [QRService] is the port to the service that creates a qr from a shortened URL.
+ */
+interface QRService {
+    fun qr(url: String): String
+}
+
+//crear el servicio de URL reachable aquí
