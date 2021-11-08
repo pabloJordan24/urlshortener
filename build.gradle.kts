@@ -9,6 +9,7 @@ plugins {
     kotlin("plugin.jpa") version "1.5.31" apply false
 }
 
+
 group = "es.unizar"
 version = "0.0.1-SNAPSHOT"
 
