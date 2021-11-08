@@ -7,6 +7,7 @@ import es.unizar.urlshortener.core.ShortUrlProperties
 import es.unizar.urlshortener.core.usecases.LogClickUseCase
 import es.unizar.urlshortener.core.usecases.CreateShortUrlUseCase
 import es.unizar.urlshortener.core.usecases.RedirectUseCase
+import es.unizar.urlshortener.core.usecases.InfoShortUrlUseCase
 import org.springframework.hateoas.server.mvc.linkTo
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
@@ -15,6 +16,7 @@ import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import java.net.URI
 import javax.servlet.http.HttpServletRequest
+import java.time.OffsetDateTime
 
 /**
  * The specification of the controller.
@@ -35,6 +37,13 @@ interface UrlShortenerController {
      */
     fun shortener(data: ShortUrlDataIn, request: HttpServletRequest): ResponseEntity<ShortUrlDataOut>
 
+    /**
+     * Dumps info about short url identified by its [id].
+     *
+     * **Note**: Delivery of use case [GetInfoShortenedURL].
+     */
+    fun getURLinfo(id: String): ResponseEntity<ShortUrlInfoData>
+
 }
 
 /**
@@ -53,6 +62,15 @@ data class ShortUrlDataOut(
     val properties: Map<String, Any> = emptyMap()
 )
 
+/**
+ * Data returned after getting the info of a shortened URL.
+ */
+data class ShortUrlInfoData(
+    val numClicks: Int,
+    val creationDate: String,
+    val uriDestino: URI
+)
+
 
 /**
  * The implementation of the controller.
@@ -63,7 +81,8 @@ data class ShortUrlDataOut(
 class UrlShortenerControllerImpl(
     val redirectUseCase: RedirectUseCase,
     val logClickUseCase: LogClickUseCase,
-    val createShortUrlUseCase: CreateShortUrlUseCase
+    val createShortUrlUseCase: CreateShortUrlUseCase,
+    val infoShortUrlUseCase: InfoShortUrlUseCase
 ) : UrlShortenerController {
 
     @GetMapping("/tiny-{id:.*}")
@@ -72,6 +91,7 @@ class UrlShortenerControllerImpl(
             logClickUseCase.logClick(id, ClickProperties(ip = request.remoteAddr))
             val h = HttpHeaders()
             h.location = URI.create(it.target)
+            //println("redirecttttt")
             ResponseEntity<Void>(h, HttpStatus.valueOf(it.mode))
         }
 
@@ -84,6 +104,7 @@ class UrlShortenerControllerImpl(
                 sponsor = data.sponsor
             )
         ).let {
+            //println(it.hash)
             val h = HttpHeaders()
             val url = linkTo<UrlShortenerControllerImpl> { redirectTo(it.hash, request) }.toUri()
             h.location = url
@@ -95,4 +116,15 @@ class UrlShortenerControllerImpl(
             )
             ResponseEntity<ShortUrlDataOut>(response, h, HttpStatus.CREATED)
         }
+
+    //idea: cambiar {id} por {id:^[a-z][a-z0-9][a-z0-9][a-z0-9][a-z0-9][a-z0-9][a-z0-9][a-z0-9]$}
+    //le decimos al controlador que el id empieza por letra min y que tiene 8 caracteres.
+    @GetMapping("/info/{id}")
+    override fun getURLinfo(@PathVariable id: String): ResponseEntity<ShortUrlInfoData> {
+        infoShortUrlUseCase.info(id).let {
+            val h = HttpHeaders()
+            val response = ShortUrlInfoData (numClicks = it.clicks, creationDate=it.created, uriDestino=URI.create(it.uri))
+            return ResponseEntity<ShortUrlInfoData>(response, h, HttpStatus.OK)
+        }
+    }
 }
