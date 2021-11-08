@@ -27,6 +27,7 @@ class LogClickUseCaseImpl(
                 ip = data.ip
             )
         )
+        println(clickRepository.showAll())
         clickRepository.save(cl)
     }
 }
