@@ -1,5 +1,6 @@
 package es.unizar.urlshortener.core
 
+import java.awt.image.BufferedImage
 import java.time.OffsetDateTime
 import java.util.*
 
@@ -21,7 +22,15 @@ data class ShortUrl(
     val created: OffsetDateTime = OffsetDateTime.now(),
     val properties: ShortUrlProperties = ShortUrlProperties()
 )
-
+/**
+ * A [QRCode] is the mapping between a remote url identified by [ShortUrl] and a local QR code identified by [hash].
+*/
+data class QRCode(
+    val qrhash: String,
+    val ShortUrlhash: String,
+    val qr: ByteArray,
+    val created: OffsetDateTime = OffsetDateTime.now()
+)
 /**
  * A [Redirection] specifies the [target] and the [status code][mode] of a redirection.
  * By default, the [status code][mode] is 307 TEMPORARY REDIRECT.
@@ -52,3 +61,12 @@ data class ClickProperties(
     val platform: String? = null,
     val country: String? = null
 )
+/*
+/**
+ * A [QRCodeProperties] is the bag of properties that a [QRCode] may have.
+ */
+data class QRCodeProperties(
+    val ip: String? = null,
+
+)
+*/

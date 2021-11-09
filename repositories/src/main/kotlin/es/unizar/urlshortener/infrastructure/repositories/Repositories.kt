@@ -17,3 +17,12 @@ interface ShortUrlEntityRepository : JpaRepository<ShortUrlEntity, String> {
  * **Note**: Spring Boot is able to discover this [JpaRepository] without further configuration.
  */
 interface ClickEntityRepository : JpaRepository<ClickEntity, Long>
+
+/**
+ * Specification of the repository of [QRCodelEntity].
+ *
+ * **Note**: Spring Boot is able to discover this [JpaRepository] without further configuration.
+ */
+interface QRCodeEntityRepository : JpaRepository<QRCodeEntity, String> {
+    fun findByHash(hash: String): QRCodeEntity?
+}

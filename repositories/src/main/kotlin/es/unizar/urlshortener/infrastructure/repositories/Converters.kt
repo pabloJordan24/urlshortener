@@ -1,6 +1,8 @@
 package es.unizar.urlshortener.infrastructure.repositories
 
 import es.unizar.urlshortener.core.*
+import java.awt.image.BufferedImage
+import java.time.OffsetDateTime
 
 /**
  * Extension method to convert a [ClickEntity] into a domain [Click].
@@ -64,3 +66,22 @@ fun ShortUrl.toEntity() = ShortUrlEntity(
     country = properties.country
 )
 
+/**
+ * Extension method to convert a [QRCodeEntity] into a domain [QRCode].
+ */
+fun QRCodeEntity.toDomain() = QRCode(
+    qrhash = hash,
+    ShortUrlhash = urlhash,
+    qr = byteqr,
+    created = created
+)
+
+/**
+ * Extension method to convert a domain [QRCode] into a [QRCodeEntity].
+ */
+fun QRCode.toEntity() = QRCodeEntity(
+    hash = qrhash,
+    urlhash = ShortUrlhash,
+    byteqr = qr,
+    created = created,
+)

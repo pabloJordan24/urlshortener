@@ -1,6 +1,8 @@
 package es.unizar.urlshortener.core.usecases
 
 import es.unizar.urlshortener.core.*
+import java.awt.image.BufferedImage
+import java.time.OffsetDateTime
 import java.util.Date
 
 /**
@@ -33,6 +35,7 @@ class CreateShortUrlUseCaseImpl(
                     sponsor = data.sponsor
                 )
             )
+
             shortUrlRepository.save(su)
         } else {
             throw InvalidUrlException(url)
