@@ -1,19 +1,20 @@
 package es.unizar.urlshortener.infrastructure.delivery
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import es.unizar.urlshortener.core.ClickProperties
 import es.unizar.urlshortener.core.ShortUrl
 import es.unizar.urlshortener.core.ShortUrlProperties
-import es.unizar.urlshortener.core.usecases.LogClickUseCase
-import es.unizar.urlshortener.core.usecases.CreateShortUrlUseCase
-import es.unizar.urlshortener.core.usecases.RedirectUseCase
+import es.unizar.urlshortener.core.usecases.*
+//import es.unizar.urlshortener.core.usecases.QRGeneratorUseCase
+import io.github.g0dkar.qrcode.QRCode
+import org.springframework.core.io.ByteArrayResource
 import org.springframework.hateoas.server.mvc.linkTo
-import org.springframework.http.HttpHeaders
-import org.springframework.http.HttpStatus
-import org.springframework.http.MediaType
-import org.springframework.http.ResponseEntity
+import org.springframework.http.*
 import org.springframework.web.bind.annotation.*
+import java.io.ByteArrayOutputStream
+import java.io.File
 import java.net.URI
+import java.time.OffsetDateTime
+import javax.imageio.ImageIO
 import javax.servlet.http.HttpServletRequest
 
 /**
@@ -35,6 +36,9 @@ interface UrlShortenerController {
      */
     fun shortener(data: ShortUrlDataIn, request: HttpServletRequest): ResponseEntity<ShortUrlDataOut>
 
+    fun redirectQr(id: String, request: HttpServletRequest): ResponseEntity<QRInfoData>
+    fun checkingqr(data: CheckDataIn, request: HttpServletRequest): ResponseEntity<CheckDataIn>
+    //fun prueba(data: ShortUrlDataIn, request: HttpServletRequest): ResponseEntity<String>
 }
 
 /**
@@ -42,7 +46,8 @@ interface UrlShortenerController {
  */
 data class ShortUrlDataIn(
     val url: String,
-    val sponsor: String? = null
+    val sponsor: String? = null,
+    //val qr : Boolean
 )
 
 /**
@@ -50,9 +55,22 @@ data class ShortUrlDataIn(
  */
 data class ShortUrlDataOut(
     val url: URI? = null,
-    val properties: Map<String, Any> = emptyMap()
+    val properties: Map<String, Any> = emptyMap(),
+    val qr:  URI? = null,
 )
 
+data class QRInfoData(
+    val qrhash: String,
+    val ShortUrlhash: String,
+    val qr: ByteArray,
+    val created: OffsetDateTime
+)
+data class CheckDataIn(
+    val isCheck: String,
+    val qr:  URI? = null,
+)
+
+var envioQR: Boolean = false
 
 /**
  * The implementation of the controller.
@@ -63,19 +81,25 @@ data class ShortUrlDataOut(
 class UrlShortenerControllerImpl(
     val redirectUseCase: RedirectUseCase,
     val logClickUseCase: LogClickUseCase,
-    val createShortUrlUseCase: CreateShortUrlUseCase
+    val createShortUrlUseCase: CreateShortUrlUseCase,
+    val qrGeneratorUseCase: QRGeneratorUseCase,
+    val qrImageUseCase: QRImageUseCase
 ) : UrlShortenerController {
+
+
 
     @GetMapping("/tiny-{id:.*}")
     override fun redirectTo(@PathVariable id: String, request: HttpServletRequest): ResponseEntity<Void> =
         redirectUseCase.redirectTo(id).let {
             logClickUseCase.logClick(id, ClickProperties(ip = request.remoteAddr))
+            println(id)
             val h = HttpHeaders()
             h.location = URI.create(it.target)
             ResponseEntity<Void>(h, HttpStatus.valueOf(it.mode))
         }
 
-    @PostMapping("/api/link", consumes = [ MediaType.APPLICATION_FORM_URLENCODED_VALUE ])
+//Cuando hace post ahi se hace shortener
+@PostMapping("/api/link", consumes = [ MediaType.APPLICATION_FORM_URLENCODED_VALUE ])
     override fun shortener(data: ShortUrlDataIn, request: HttpServletRequest): ResponseEntity<ShortUrlDataOut> =
         createShortUrlUseCase.create(
             url = data.url,
@@ -85,14 +109,64 @@ class UrlShortenerControllerImpl(
             )
         ).let {
             val h = HttpHeaders()
+            println(data)
             val url = linkTo<UrlShortenerControllerImpl> { redirectTo(it.hash, request) }.toUri()
             h.location = url
+
+
+            var uriqr: URI? = null
+
+
+            if (envioQR){
+                var q = qrGeneratorUseCase.create(
+                    data = it.hash
+                )
+                uriqr = linkTo<UrlShortenerControllerImpl> { redirectQr(q.qrhash, request) }.toUri()
+                h.set("qr", uriqr.toString());
+            }
+
+
             val response = ShortUrlDataOut(
                 url = url,
                 properties = mapOf(
                     "safe" to it.properties.safe
-                )
+                ),
+                qr = uriqr
             )
+            println("ENVIAMOS ????" +envioQR)
             ResponseEntity<ShortUrlDataOut>(response, h, HttpStatus.CREATED)
         }
+
+    @GetMapping("/qrcode-{id:.*}")
+    override fun redirectQr(@PathVariable id: String, request: HttpServletRequest): ResponseEntity<QRInfoData>{
+        qrImageUseCase.image(id).let {
+            println("ENTRAAAA: "+id)
+           /* val baos2 = ByteArrayOutputStream(it.qr.size)
+            baos2.write(it.qr, 0, it.qr.size)*/
+            val response = QRInfoData(qrhash = it.qrhash, ShortUrlhash= it.ShortUrlhash , qr = it.qr, created = it.created)
+
+            val h = HttpHeaders()
+            return ResponseEntity<QRInfoData>(response, h, HttpStatus.OK)
+        }
+
+    }
+
+    //Cuando hace post ahi se hace shortener
+    @PostMapping("/api/checkqr", consumes = [ MediaType.APPLICATION_FORM_URLENCODED_VALUE ])
+    override fun checkingqr(data: CheckDataIn, request: HttpServletRequest): ResponseEntity<CheckDataIn> {
+        println(data.isCheck)
+        if (data.isCheck == "true"){
+            envioQR = true
+        }else{
+            envioQR = false
+        }
+
+        val h = HttpHeaders()
+        val response = CheckDataIn(isCheck = "bien")
+        return ResponseEntity<CheckDataIn>(response, h, HttpStatus.OK)
+    }
+
 }
+
+
+
