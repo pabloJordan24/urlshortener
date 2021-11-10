@@ -17,88 +17,77 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import javax.servlet.http.HttpServletRequest
-import es.unizar.urlshortener.infrastructure.delivery.UrlShortenerControllerImpl
+import java.io.BufferedReader
+import org.springframework.hateoas.server.mvc.linkTo
 
-
+/**
+ * The specification of the controller.
+ */
 interface UrlCsvShortenerController {
-
+    /**
+     * Recieves a CSV file with URIs to shorten.
+     *
+     * Returns another csv file with the URIs shortened (if possible). If not,
+     * a message specifying the error is shown.
+     */
     fun handleCsvUpload(file: MultipartFile, request: HttpServletRequest): ResponseEntity<Resource>
 
 }
 
+
+/**
+ * The implementation of the controller.
+ *
+ * **Note**: Spring Boot is able to discover this [RestController] without further configuration.
+ */
 @RestController
 class UrlCsvShortenerControllerImpl(
     val createCsvShortUrlUseCase: CreateCsvShortUrlUseCase,
     val createShortUrlUseCase: CreateShortUrlUseCase
 ) : UrlCsvShortenerController {
 
-    /*@PostMapping("/csv", consumes = [ "multipart/form-data" ])
-    override fun handleCsvUpload(@RequestParam("uploadCSV") file: MultipartFile, request: HttpServletRequest): ResponseEntity<Resource> {
-        createCsvShortUrlUseCase.create(
-            file = file,
-            request = request
-        ).let {
-            return it
-        }
-    }*/
+    @PostMapping("/csv", consumes = [ "multipart/form-data" ], produces=["text/csv"])
+    override fun handleCsvUpload(@RequestParam("csv") file: MultipartFile, request: HttpServletRequest): ResponseEntity<Resource> {
+        //leemos los bytes del multipart
+        val reader: BufferedReader = file.getInputStream().bufferedReader()
 
-    @PostMapping("/csv", consumes = [ "multipart/form-data" ])
-    override fun handleCsvUpload(@RequestParam("uploadCSV") file: MultipartFile, request: HttpServletRequest): ResponseEntity<Resource> {
-        val filepath: Path = Paths.get(file.originalFilename)
-        Files.newOutputStream(filepath).use { os -> os.write(file.bytes) }
+        //creamos sólo las shortUrls ó en su defecto, conocemos el error
+        val map = createCsvShortUrlUseCase.create(reader,request.remoteAddr)
+
+        //creamos el fichero de salida con el resultado
         val shortenedFile = File("shortened.csv")
-        try {
-            shortenedFile.writeText("")
-            var lines:List<String> = File(file.originalFilename).readLines()
-            lines.forEach {
-                    line -> println(line)
-                createShortUrlUseCase.create(
-                    url = line,
-                    data = ShortUrlProperties(
-                        ip = request.remoteAddr
-                    )
-                ).let {
-                    val url = linkTo<UrlShortenerControllerImpl> { redirectTo(it.hash, request) }.toUri()
-                    println(url)
-                    shortenedFile.appendText("$line,$url\n")
+        shortenedFile.writeText("")
+        val h = HttpHeaders()
+        var headerLocationCreado = false
+        map.forEach { 
+            //si es un hash y no un mensaje de error, le aplico la redireccion
+            if (it.value.length <= 8) {
+                val url = linkTo<UrlShortenerControllerImpl> { redirectTo(it.value, request) }.toUri()
+                //write the first URL in "Location" header
+                if(!headerLocationCreado) {
+                    headerLocationCreado = true
+                    h.add("Location", url.toString())
                 }
+                //write original URI and shortened one
+                val valorEscribir = it.key + "," + url + "\n";
+                shortenedFile.appendText(valorEscribir)
+                //println("Clave: "+it.key+", Valor: "+url)
             }
-
-        } catch (e:Exception) {
-            e.printStackTrace()
-        } finally {
-            println("__________FINISHED__________")
+            else {
+                //write original URI and shortened one
+                val valorEscribir = it.key + ", ," + it.value + "\n";
+                shortenedFile.appendText(valorEscribir)
+                //println("Clave: "+it.key+", Valor: "+it.value)
+            }
         }
 
         val path: Path = Paths.get(shortenedFile.absolutePath)
         val resource = ByteArrayResource(Files.readAllBytes(path))
-        val h = HttpHeaders()
 
-        return ResponseEntity.ok()
+        return ResponseEntity.status(201)
             .headers(h)
             .contentLength(shortenedFile.length())
             .contentType(MediaType.parseMediaType("text/csv"))
             .body(resource)
     }
-
-    /*@PostMapping("/csv", consumes = [ "multipart/form-data" ])
-    override fun handleCsvUpload(@RequestParam("uploadCSV") file: MultipartFile, request: HttpServletRequest): ResponseEntity<String> {
-        val filepath: Path = Paths.get(file.originalFilename)
-        Files.newOutputStream(filepath).use { os -> os.write(file.bytes) }
-        try {
-            val fileName = "ejemplo.csv"
-            val shortenedFile = File("shortened.csv")
-            shortenedFile.writeText("")
-            var lines:List<String> = File(fileName).readLines()
-            lines.forEach {
-                    line -> println(line)
-                val url = linkTo<UrlShortenerControllerImpl> { shortener(ShortUrlDataIn(line), request) }
-                shortenedFile.appendText("$line,$it\n")
-            }
-        } catch (e:Exception) {
-            e.printStackTrace()
-        } finally {
-            println("__________FINISHED__________")
-        }
-    }*/
 }
