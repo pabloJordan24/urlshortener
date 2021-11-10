@@ -52,3 +52,12 @@ data class ClickProperties(
     val platform: String? = null,
     val country: String? = null
 )
+
+/**
+ * A [ShortUrlInfo] contains information about a [ShortUrl].
+ */
+data class ShortUrlInfo(
+    val clicks: Int,
+    val created: String,
+    val uri: String
+)
