@@ -33,16 +33,20 @@ class CreateCsvShortUrlUseCaseImpl(
         Files.newOutputStream(filepath).use { os -> os.write(file.bytes) }
         val shortenedFile = File("shortened.csv")
         try {
-            val fileName = "ejemplo.csv"
+            //val fileName = "ejemplo.csv"
             shortenedFile.writeText("")
-            var lines:List<String> = File(fileName).readLines()
+            var lines:List<String> = File(file.originalFilename).readLines()
             lines.forEach {
                     line -> println(line)
                     createShortUrlUseCase.create(
                         url = line,
-                        data = ShortUrlProperties()
+                        data = ShortUrlProperties(
+                            ip = request.remoteAddr
+                        )
                     ).let {
-                        shortenedFile.appendText("$line,$it\n")
+                        redirectUseCase.redirectTo(it.hash).let {
+                            shortenedFile.appendText("$line,$it\n")
+                        }
                     }
             }
 
