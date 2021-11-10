@@ -31,7 +31,22 @@ subprojects {
     }
 }
 
-project(":core") { }
+project(":core") {
+    apply(plugin = "org.jetbrains.kotlin.plugin.spring")
+    apply(plugin = "org.springframework.boot")
+    apply(plugin = "io.spring.dependency-management")
+    dependencies {
+        "implementation"("org.springframework.boot:spring-boot-starter-web")
+        "implementation"("org.springframework.boot:spring-boot-starter-hateoas")
+        "implementation"("com.fasterxml.jackson.module:jackson-module-kotlin")
+        "implementation"("commons-validator:commons-validator:1.6")
+        "implementation"("com.google.guava:guava:23.0")
+        "implementation"("com.opencsv:opencsv:3.7")
+    }
+    tasks.getByName<BootJar>("bootJar") {
+        enabled = false
+    }
+}
 
 project(":repositories") {
     apply(plugin = "org.springframework.boot")

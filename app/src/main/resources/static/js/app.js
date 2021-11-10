@@ -21,4 +21,23 @@ $(document).ready(
                     }
                 });
             });
+        $("#shortenerCSV").submit(
+            function(event) {
+                event.preventDefault();
+                $.ajax({
+                    url: "/csv",
+                    type: "POST",
+                    data: new FormData(this),
+                    enctype: 'multipart/form-data',
+                    processData: false,
+                    contentType: false,
+                    cache: false,
+                    success: function (res) {
+                        console.log(res);
+                    },
+                        error: function (err) {
+                        console.error(err);
+                    }
+                });
+            });
     });
