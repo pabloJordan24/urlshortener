@@ -20,26 +20,39 @@ import javax.servlet.http.HttpServletRequest
 import java.io.BufferedReader
 import org.springframework.hateoas.server.mvc.linkTo
 
-
+/**
+ * The specification of the controller.
+ */
 interface UrlCsvShortenerController {
-
+    /**
+     * Recieves a CSV file with URIs to shorten.
+     *
+     * Returns another csv file with the URIs shortened (if possible). If not,
+     * a message specifying the error is shown.
+     */
     fun handleCsvUpload(file: MultipartFile, request: HttpServletRequest): ResponseEntity<Resource>
 
 }
 
+
+/**
+ * The implementation of the controller.
+ *
+ * **Note**: Spring Boot is able to discover this [RestController] without further configuration.
+ */
 @RestController
 class UrlCsvShortenerControllerImpl(
     val createCsvShortUrlUseCase: CreateCsvShortUrlUseCase,
     val createShortUrlUseCase: CreateShortUrlUseCase
 ) : UrlCsvShortenerController {
 
-    @PostMapping("/csv", consumes = [ "multipart/form-data" ])
+    @PostMapping("/csv", consumes = [ "multipart/form-data" ], produces=["text/csv"])
     override fun handleCsvUpload(@RequestParam("csv") file: MultipartFile, request: HttpServletRequest): ResponseEntity<Resource> {
         //leemos los bytes del multipart
         val reader: BufferedReader = file.getInputStream().bufferedReader()
 
         //creamos sólo las shortUrls ó en su defecto, conocemos el error
-        val map = createCsvShortUrlUseCase.create(reader,request)
+        val map = createCsvShortUrlUseCase.create(reader,request.remoteAddr)
 
         //creamos el fichero de salida con el resultado
         val shortenedFile = File("shortened.csv")
@@ -53,13 +66,13 @@ class UrlCsvShortenerControllerImpl(
                 //write original URI and shortened one
                 val valorEscribir = it.key + "," + url + "\n";
                 shortenedFile.appendText(valorEscribir)
-                println("Clave: "+it.key+", Valor: "+url)
+                //println("Clave: "+it.key+", Valor: "+url)
             }
             else {
                 //write original URI and shortened one
                 val valorEscribir = it.key + ", ," + it.value + "\n";
                 shortenedFile.appendText(valorEscribir)
-                println("Clave: "+it.key+", Valor: "+it.value)
+                //println("Clave: "+it.key+", Valor: "+it.value)
             }
         }
 
