@@ -60,6 +60,7 @@ $(document).ready(
                     cache: false,
                     success: function (res) {
                         console.log(res);
+                        window.open("http://localhost:8080/csv/download")
                     },
                     error: function (err) {
                         console.error(err);

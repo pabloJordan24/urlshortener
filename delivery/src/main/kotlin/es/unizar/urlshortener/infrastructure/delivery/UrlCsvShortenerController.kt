@@ -1,24 +1,23 @@
 package es.unizar.urlshortener.infrastructure.delivery
 
-import es.unizar.urlshortener.core.ShortUrlProperties
 import es.unizar.urlshortener.core.usecases.CreateCsvShortUrlUseCase
 import es.unizar.urlshortener.core.usecases.CreateShortUrlUseCase
 import org.springframework.core.io.ByteArrayResource
 import org.springframework.core.io.Resource
 import org.springframework.hateoas.server.mvc.linkTo
 import org.springframework.http.HttpHeaders
-import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.multipart.MultipartFile
+import java.io.BufferedReader
 import java.io.File
+import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import javax.servlet.http.HttpServletRequest
-import java.io.BufferedReader
-import org.springframework.hateoas.server.mvc.linkTo
+
 
 /**
  * The specification of the controller.
@@ -31,6 +30,8 @@ interface UrlCsvShortenerController {
      * a message specifying the error is shown.
      */
     fun handleCsvUpload(file: MultipartFile, request: HttpServletRequest): ResponseEntity<Resource>
+
+    fun downloadCSV(): ResponseEntity<Resource>
 
 }
 
@@ -85,6 +86,21 @@ class UrlCsvShortenerControllerImpl(
         val resource = ByteArrayResource(Files.readAllBytes(path))
 
         return ResponseEntity.status(201)
+            .headers(h)
+            .contentLength(shortenedFile.length())
+            .contentType(MediaType.parseMediaType("text/csv"))
+            .body(resource)
+    }
+
+    @RequestMapping(path = ["/csv/download"], method = [RequestMethod.GET])
+    @Throws(IOException::class)
+    override fun downloadCSV(): ResponseEntity<Resource> {
+
+        val shortenedFile = File("shortened.csv")
+        val h = HttpHeaders()
+        val path: Path = Paths.get(shortenedFile.getAbsolutePath())
+        val resource = ByteArrayResource(Files.readAllBytes(path))
+        return ResponseEntity.ok()
             .headers(h)
             .contentLength(shortenedFile.length())
             .contentType(MediaType.parseMediaType("text/csv"))
