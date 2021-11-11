@@ -50,6 +50,7 @@ $(document).ready(
         $("#shortenerCSV").submit(
             function(event) {
                 event.preventDefault();
+                alert("shortener")
                 $.ajax({
                     url: "/csv",
                     type: "POST",
@@ -64,6 +65,7 @@ $(document).ready(
                     },
                     error: function (err) {
                         console.error(err);
+                        alert(res)
                     }
                 });
             });

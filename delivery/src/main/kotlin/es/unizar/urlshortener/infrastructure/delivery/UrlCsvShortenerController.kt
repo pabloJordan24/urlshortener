@@ -17,7 +17,8 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import javax.servlet.http.HttpServletRequest
-
+import java.io.BufferedReader
+import org.springframework.hateoas.server.mvc.linkTo
 
 /**
  * The specification of the controller.
@@ -69,6 +70,7 @@ class UrlCsvShortenerControllerImpl(
                     headerLocationCreado = true
                     h.add("Location", url.toString())
                 }
+
                 //write original URI and shortened one
                 val valorEscribir = it.key + "," + url + "\n";
                 shortenedFile.appendText(valorEscribir)
@@ -97,7 +99,6 @@ class UrlCsvShortenerControllerImpl(
     override fun downloadCSV(): ResponseEntity<Resource> {
 
         val shortenedFile = File("shortened.csv")
-        val h = HttpHeaders()
         val path: Path = Paths.get(shortenedFile.getAbsolutePath())
         val resource = ByteArrayResource(Files.readAllBytes(path))
         return ResponseEntity.ok()
