@@ -47,10 +47,9 @@ $(document).ready(
             });
         });
 
-        $("#shortenerCSV").submit(
+        /*$("#shortenerCSV").submit(
             function(event) {
                 event.preventDefault();
-                alert("shortener")
                 $.ajax({
                     url: "/csv",
                     type: "POST",
@@ -61,14 +60,13 @@ $(document).ready(
                     cache: false,
                     success: function (res) {
                         console.log(res);
-                        window.open("http://localhost:8080/csv/download")
+                        //window.open("http://localhost:8080/csv/download")
                     },
                     error: function (err) {
                         console.error(err);
-                        alert(res)
                     }
                 });
-            });
+            });*/
     }
     
 );
