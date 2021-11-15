@@ -17,8 +17,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import javax.servlet.http.HttpServletRequest
-import java.io.BufferedReader
-import org.springframework.hateoas.server.mvc.linkTo
+
 
 /**
  * The specification of the controller.
@@ -57,9 +56,11 @@ class UrlCsvShortenerControllerImpl(
         val map = createCsvShortUrlUseCase.create(reader,request.remoteAddr)
 
         //creamos el fichero de salida con el resultado
-        val shortenedFile = File("shortened.csv")
+        val nameShortenedFile = "Shortened_" + file.originalFilename
+        val shortenedFile = File(nameShortenedFile)
         shortenedFile.writeText("")
         val h = HttpHeaders()
+        var status = 400
         var headerLocationCreado = false
         map.forEach { 
             //si es un hash y no un mensaje de error, le aplico la redireccion
@@ -69,8 +70,8 @@ class UrlCsvShortenerControllerImpl(
                 if(!headerLocationCreado) {
                     headerLocationCreado = true
                     h.add("Location", url.toString())
+                    status = 201
                 }
-
                 //write original URI and shortened one
                 val valorEscribir = it.key + "," + url + "\n";
                 shortenedFile.appendText(valorEscribir)
@@ -87,7 +88,10 @@ class UrlCsvShortenerControllerImpl(
         val path: Path = Paths.get(shortenedFile.absolutePath)
         val resource = ByteArrayResource(Files.readAllBytes(path))
 
-        return ResponseEntity.status(201)
+        //Falta eliminar el fichero para liberar espacio en el server o crearlo temporal
+
+        return ResponseEntity.status(status)
+            .header("Content-Disposition", "attachment; filename=\"" + nameShortenedFile + "\"")
             .headers(h)
             .contentLength(shortenedFile.length())
             .contentType(MediaType.parseMediaType("text/csv"))
@@ -99,6 +103,7 @@ class UrlCsvShortenerControllerImpl(
     override fun downloadCSV(): ResponseEntity<Resource> {
 
         val shortenedFile = File("shortened.csv")
+        val h = HttpHeaders()
         val path: Path = Paths.get(shortenedFile.getAbsolutePath())
         val resource = ByteArrayResource(Files.readAllBytes(path))
         return ResponseEntity.ok()
