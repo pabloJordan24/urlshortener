@@ -2,44 +2,20 @@ $(document).ready(
 
     function() {
 
-        $('#shortener :checkbox').change(function() {
-             // this will contain a reference to the checkbox
-             //alert("hola")
-             //if (this.checked) {
-                 // the checkbox is now checked
-
-                  console.log(this.checked)
-                    var envio = "";
-                    if (this.checked){
-                        envio = "true"
-                    }else{
-                        envio = "false"
-                    }
-                    $.ajax({
-                        type : "POST",
-                        url : "/api/checkqr",
-                        //async: false,
-                        contentType: 'application/x-www-form-urlencoded',
-
-                        //dataType: "json",
-                        data : {isCheck: envio},
-
-                    });
-
-
-             /*} else {
-                 // the checkbox is now no longer checked
-                 console.log("FALSE")
-             }*/
-        });
+        $('#imageQR').hide();
         $("#shortener").submit(
             function(event) {
                 event.preventDefault();
+                var checked=false
+                if ($("#shortener :checkbox").is(":checked")) {
+                    checked=true
+                }
+                var uridec = decodeURIComponent($(this).serialize().split("=").pop())
+                console.log(uridec)
                 $.ajax({
                     type : "POST",
                     url : "/api/link",
-                    data : $(this).serialize(),
-
+                    data : {"url":uridec,"qr":checked},
                     success : function(msg, status, request) {
 
                         console.log(request)
@@ -55,22 +31,11 @@ $(document).ready(
                         console.log($("#qrCheck").is(":checked"))
                         if( $("#qrCheck").is(":checked") ) {
                               console.log("Activadooo")
-                              $('#qruri').show();
-                               $("#qruri").html(
-                                "<input id='usertext' type='text' class='center-block form-control input-lg'"
-                                +" title= "
-                                + msg.qr
-                                +" value= "
-                                +msg.qr
-                                +" name='shortUrlBox' readonly><span class='input-group-btn'><button class='btn btn-lg btn-primary' type='submit'>Info!</button></span>"
-                                /*"<p>QR uri</p><div class='alert alert-success lead'><a id='qrredirect' target='_blank' href='/qr' role='button'>"
-                                 + msg.qr
-                                 +"</a></div>"*/
-                                 );
-
+                              $('#imageQR').show();
+                              $('#qrurlbuena').attr('href', msg.qr);
                         }else{
-                            $('#qruri').hide();
-
+                            $('#imageQR').hide();
+                            alert("Error")
                         }
 
                     },
@@ -83,28 +48,28 @@ $(document).ready(
                 });
             });
 
-        $("#imageQR").submit(
+        //Para cargar la imagen del qr al pulsar sobre su url
+        $('#qrurlbuena').click(
         function(event) {
+            alert("/qrcode-" + $("#qrurlbuena" ).prop( "href").split("qrcode-").pop())
             event.preventDefault();
-            //alert($(this).serialize().split("2F").pop())
-
+            alert($("#qrurlbuena" ).prop( "href").split("qrcode-").pop())
+            var ref = $("#qrurlbuena" ).prop( "href")
             $.ajax({
                 type : "GET",
-                url : $(this).serialize().split("2F").pop(),
+                url : "/qrcode-" + $("#qrurlbuena" ).prop( "href").split("qrcode-").pop(),
                 success : function(response) {
-
-                   // $("#resultInfo").html(
-                        console.log(response)
-                        $('#resultInfo').show();
-                        $('#resultInfo').attr('src', `data:image/png;base64,${response.qr}`);
-
-                    //);
+                     window.open(
+                        ref,
+                        '_blank' // <- This is what makes it open in a new window.
+                     );
                 },
                 error : function() {
-                     $("#resultInfo").html(
-                        "<div class='alert alert-danger lead'>ERROR</div>");
+                   alert("error")
                 }
+
             });
+
         });
 
 
