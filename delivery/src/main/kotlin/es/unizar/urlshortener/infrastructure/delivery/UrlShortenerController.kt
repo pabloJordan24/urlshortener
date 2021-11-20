@@ -1,21 +1,17 @@
 package es.unizar.urlshortener.infrastructure.delivery
 
 import es.unizar.urlshortener.core.ClickProperties
-import es.unizar.urlshortener.core.ShortUrl
 import es.unizar.urlshortener.core.ShortUrlProperties
 import es.unizar.urlshortener.core.usecases.*
-//import es.unizar.urlshortener.core.usecases.QRGeneratorUseCase
-import io.github.g0dkar.qrcode.QRCode
-import org.springframework.core.io.ByteArrayResource
 import org.springframework.hateoas.server.mvc.linkTo
 import org.springframework.http.*
 import org.springframework.web.bind.annotation.*
-import java.io.ByteArrayOutputStream
-import java.io.File
+import java.awt.image.BufferedImage
 import java.net.URI
 import java.time.OffsetDateTime
-import javax.imageio.ImageIO
 import javax.servlet.http.HttpServletRequest
+import javax.swing.text.html.ImageView
+
 
 /**
  * The specification of the controller.
@@ -36,9 +32,8 @@ interface UrlShortenerController {
      */
     fun shortener(data: ShortUrlDataIn, request: HttpServletRequest): ResponseEntity<ShortUrlDataOut>
 
-    fun redirectQr(id: String, request: HttpServletRequest): ResponseEntity<QRInfoData>
-    fun checkingqr(data: CheckDataIn, request: HttpServletRequest): ResponseEntity<CheckDataIn>
-    //fun prueba(data: ShortUrlDataIn, request: HttpServletRequest): ResponseEntity<String>
+    fun redirectQr(id: String, request: HttpServletRequest): ResponseEntity<ByteArray>
+
 }
 
 /**
@@ -47,7 +42,8 @@ interface UrlShortenerController {
 data class ShortUrlDataIn(
     val url: String,
     val sponsor: String? = null,
-    //val qr : Boolean
+    val qr: Boolean
+
 )
 
 /**
@@ -57,20 +53,9 @@ data class ShortUrlDataOut(
     val url: URI? = null,
     val properties: Map<String, Any> = emptyMap(),
     val qr:  URI? = null,
+
 )
 
-data class QRInfoData(
-    val qrhash: String,
-    val ShortUrlhash: String,
-    val qr: ByteArray,
-    val created: OffsetDateTime
-)
-data class CheckDataIn(
-    val isCheck: String,
-    val qr:  URI? = null,
-)
-
-var envioQR: Boolean = false
 
 /**
  * The implementation of the controller.
@@ -116,15 +101,16 @@ class UrlShortenerControllerImpl(
 
             var uriqr: URI? = null
 
+            if (data.qr){
 
-            if (envioQR){
                 var q = qrGeneratorUseCase.create(
                     data = it.hash
                 )
+
                 uriqr = linkTo<UrlShortenerControllerImpl> { redirectQr(q.qrhash, request) }.toUri()
                 h.set("qr", uriqr.toString());
-            }
 
+            }
 
             val response = ShortUrlDataOut(
                 url = url,
@@ -133,38 +119,18 @@ class UrlShortenerControllerImpl(
                 ),
                 qr = uriqr
             )
-            println("ENVIAMOS ????" +envioQR)
             ResponseEntity<ShortUrlDataOut>(response, h, HttpStatus.CREATED)
         }
 
-    @GetMapping("/qrcode-{id:.*}")
-    override fun redirectQr(@PathVariable id: String, request: HttpServletRequest): ResponseEntity<QRInfoData>{
+    @GetMapping("/qrcode-{id:.*}" , produces = [MediaType.IMAGE_JPEG_VALUE])
+    override fun redirectQr(@PathVariable id: String, request: HttpServletRequest): ResponseEntity<ByteArray>{
         qrImageUseCase.image(id).let {
-            println("ENTRAAAA: "+id)
-           /* val baos2 = ByteArrayOutputStream(it.qr.size)
-            baos2.write(it.qr, 0, it.qr.size)*/
-            val response = QRInfoData(qrhash = it.qrhash, ShortUrlhash= it.ShortUrlhash , qr = it.qr, created = it.created)
-
             val h = HttpHeaders()
-            return ResponseEntity<QRInfoData>(response, h, HttpStatus.OK)
+            return ResponseEntity<ByteArray>(it.qr, h, HttpStatus.OK)
         }
 
     }
 
-    //Cuando hace post ahi se hace shortener
-    @PostMapping("/api/checkqr", consumes = [ MediaType.APPLICATION_FORM_URLENCODED_VALUE ])
-    override fun checkingqr(data: CheckDataIn, request: HttpServletRequest): ResponseEntity<CheckDataIn> {
-        println(data.isCheck)
-        if (data.isCheck == "true"){
-            envioQR = true
-        }else{
-            envioQR = false
-        }
-
-        val h = HttpHeaders()
-        val response = CheckDataIn(isCheck = "bien")
-        return ResponseEntity<CheckDataIn>(response, h, HttpStatus.OK)
-    }
 
 }
 

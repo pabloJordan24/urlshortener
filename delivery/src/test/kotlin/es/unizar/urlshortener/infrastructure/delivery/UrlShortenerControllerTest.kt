@@ -1,9 +1,7 @@
 package es.unizar.urlshortener.infrastructure.delivery
 
 import es.unizar.urlshortener.core.*
-import es.unizar.urlshortener.core.usecases.CreateShortUrlUseCase
-import es.unizar.urlshortener.core.usecases.LogClickUseCase
-import es.unizar.urlshortener.core.usecases.RedirectUseCase
+import es.unizar.urlshortener.core.usecases.*
 import org.junit.jupiter.api.Test
 import org.mockito.BDDMockito.given
 import org.mockito.BDDMockito.never
@@ -36,6 +34,14 @@ class UrlShortenerControllerTest {
 
     @MockBean
     private lateinit var createShortUrlUseCase: CreateShortUrlUseCase
+
+    @MockBean
+    private lateinit var qrGeneratorUseCase: QRGeneratorUseCase
+
+    @MockBean
+    private lateinit var qrImageUseCase: QRImageUseCase
+    @MockBean
+    private lateinit var qrService: QRService
 
     @Test
     fun `redirectTo returns a redirect when the key exists`() {
@@ -90,4 +96,31 @@ class UrlShortenerControllerTest {
             .andExpect(status().isBadRequest)
             .andExpect(jsonPath("$.statusCode").value(400))
     }
+
+    @Test
+    fun `create returns a qr for de shorurl`() {
+
+        given(createShortUrlUseCase.create(
+            url = "http://google.com",
+            data = ShortUrlProperties(ip = "127.0.0.1"),
+        )).willReturn(ShortUrl("58f3ae21", Redirection("http://google.com")))
+
+        given(qrGeneratorUseCase.create(
+            data = "58f3ae21"
+        )).willAnswer { QRCode("0a9143c7","58f3ae21", qrService.qrbytes(qrService.qr("http://localhost/tiny-58f3ae21")))}
+        mockMvc.perform(post("/api/link")
+            .param("url", "http://google.com")
+
+            .contentType(MediaType.APPLICATION_FORM_URLENCODED_VALUE))
+            .andDo(print())
+            .andExpect(status().isCreated)
+            .andExpect(redirectedUrl("http://localhost/tiny-58f3ae21"))
+            .andExpect(jsonPath("$.qr").value("http://localhost:8080/qrcode-0a9143c7"))
+
+    }
+
+
+
+
+
 }

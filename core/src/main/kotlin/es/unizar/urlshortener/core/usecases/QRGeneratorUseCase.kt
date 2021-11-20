@@ -25,10 +25,11 @@ class QRGeneratorUseCaseImpl(
     private val hashService: HashService
 ) : QRGeneratorUseCase {
     override fun create(data: String): QRCode {
-
-        var qrc = qrService.qr("http://localhost/" + data)
+        println("VAMOS A ENVIAR ????")
+        var qrc = qrService.qr("http://localhost/tiny-" + data)
+        println("DATA: "+ data)
         val qrCode = QRCode(
-            qrhash = hashService.hasUrl("http://localhost/" + data),
+            qrhash = hashService.hasUrl("http://localhost/tiny-" + data),
             ShortUrlhash = data,
             qr = qrService.qrbytes(qrc)
         )
@@ -37,7 +38,7 @@ class QRGeneratorUseCaseImpl(
 
 
         qrCodeRepository.save(qrCode)
-        println("LEE FICHERO: " +qrCode.qr)
+        //println("LEE FICHERO: " +qrCode.qr)
         return qrCode
     }
 }
