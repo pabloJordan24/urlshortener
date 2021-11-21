@@ -1,10 +1,6 @@
 package es.unizar.urlshortener.core.usecases
 
 import es.unizar.urlshortener.core.*
-import java.awt.image.BufferedImage
-import java.io.File
-import java.time.OffsetDateTime
-import java.util.Date
 
 /**
  *
@@ -25,20 +21,28 @@ class QRGeneratorUseCaseImpl(
     private val hashService: HashService
 ) : QRGeneratorUseCase {
     override fun create(data: String): QRCode {
-        println("VAMOS A ENVIAR ????")
-        var qrc = qrService.qr("http://localhost/tiny-" + data)
-        println("DATA: "+ data)
-        val qrCode = QRCode(
-            qrhash = hashService.hasUrl("http://localhost/tiny-" + data),
-            ShortUrlhash = data,
-            qr = qrService.qrbytes(qrc)
-        )
+        println("VAMOS A ENVIAR ???? "+data)
 
 
+        var qrc = qrService.qr("http://localhost/" + data)
+        var hashqr = hashService.hasUrl("http://localhost/" + data)
+        var qrCode = qrCodeRepository.findByKey(hashqr)
 
-
-        qrCodeRepository.save(qrCode)
-        //println("LEE FICHERO: " +qrCode.qr)
+        if(qrCode == null){
+            println("NO EXISTE")
+            qrCode = QRCode(
+                qrhash = hashService.hasUrl("http://localhost/" + data),
+                ShortUrlhash = data,
+                qr = qrService.qrbytes(qrc)
+            )
+            println("QRHASSSSSS: "+ qrCode.qr)
+            if ((qrCode.qr == null) || (qrCode.qrhash == null) || (qrCode.ShortUrlhash == null)) throw QRCodeUriNotFoundException(qrCode.qrhash, " is not reachable")
+            qrCodeRepository.save(qrCode)
+        }else{
+            println("EXISTE")
+        }
         return qrCode
+        //println("LEE FICHERO: " +qrCode.qr)
+
     }
 }

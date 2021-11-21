@@ -1,6 +1,7 @@
 package es.unizar.urlshortener.infrastructure.delivery
 
 import es.unizar.urlshortener.core.InvalidUrlException
+import es.unizar.urlshortener.core.QRCodeUriNotFoundException
 import es.unizar.urlshortener.core.RedirectionNotFound
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
@@ -29,10 +30,21 @@ class RestResponseEntityExceptionHandler : ResponseEntityExceptionHandler() {
     @ExceptionHandler(value = [RedirectionNotFound::class])
     @ResponseStatus(HttpStatus.NOT_FOUND)
     protected fun redirectionNotFound(ex: RedirectionNotFound) = ErrorMessage(HttpStatus.NOT_FOUND.value(), ex.message)
+
+    @ResponseBody
+    @ExceptionHandler(value = [QRCodeUriNotFoundException::class])
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    protected fun uriNotReachable(ex: QRCodeUriNotFoundException) = ErrorMessageReachableQR(HttpStatus.BAD_REQUEST.value(), ex.message)
 }
 
 data class ErrorMessage(
     val statusCode: Int,
     val message: String?,
+    val timestamp: String = DateTimeFormatter.ISO_DATE_TIME.format(OffsetDateTime.now())
+)
+
+data class ErrorMessageReachableQR(
+    val statusCode: Int,
+    val error: String?,
     val timestamp: String = DateTimeFormatter.ISO_DATE_TIME.format(OffsetDateTime.now())
 )

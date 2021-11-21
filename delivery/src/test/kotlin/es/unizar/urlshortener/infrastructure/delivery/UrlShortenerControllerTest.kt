@@ -3,8 +3,8 @@ package es.unizar.urlshortener.infrastructure.delivery
 import es.unizar.urlshortener.core.*
 import es.unizar.urlshortener.core.usecases.*
 import org.junit.jupiter.api.Test
-import org.mockito.BDDMockito.given
-import org.mockito.BDDMockito.never
+import org.mockito.BDDMockito.*
+
 import org.mockito.kotlin.verify
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
@@ -76,6 +76,7 @@ class UrlShortenerControllerTest {
 
         mockMvc.perform(post("/api/link")
             .param("url", "http://example.com/")
+            .param("qr", "false")
             .contentType(MediaType.APPLICATION_FORM_URLENCODED_VALUE))
             .andDo(print())
             .andExpect(status().isCreated)
@@ -92,33 +93,77 @@ class UrlShortenerControllerTest {
 
         mockMvc.perform(post("/api/link")
             .param("url", "ftp://example.com/")
+            .param("qr", "false")
             .contentType(MediaType.APPLICATION_FORM_URLENCODED_VALUE))
             .andExpect(status().isBadRequest)
             .andExpect(jsonPath("$.statusCode").value(400))
     }
 
     @Test
-    fun `create returns a qr for de shorurl`() {
+    fun `create not returns a qr valid cause is not checked the option`() {
 
         given(createShortUrlUseCase.create(
             url = "http://google.com",
             data = ShortUrlProperties(ip = "127.0.0.1"),
         )).willReturn(ShortUrl("58f3ae21", Redirection("http://google.com")))
 
-        given(qrGeneratorUseCase.create(
-            data = "58f3ae21"
-        )).willAnswer { QRCode("0a9143c7","58f3ae21", qrService.qrbytes(qrService.qr("http://localhost/tiny-58f3ae21")))}
         mockMvc.perform(post("/api/link")
             .param("url", "http://google.com")
-
+            .param("qr", "false")
             .contentType(MediaType.APPLICATION_FORM_URLENCODED_VALUE))
             .andDo(print())
             .andExpect(status().isCreated)
             .andExpect(redirectedUrl("http://localhost/tiny-58f3ae21"))
-            .andExpect(jsonPath("$.qr").value("http://localhost:8080/qrcode-0a9143c7"))
+            .andExpect(jsonPath("$.url").value("http://localhost/tiny-58f3ae21"))
 
     }
+    @Test
+    fun `create returns a qr valid condsidering bytearray null`() {
 
+        given(createShortUrlUseCase.create(
+            url = "http://google.com",
+            data = ShortUrlProperties(ip = "127.0.0.1"),
+        )).willReturn(ShortUrl("58f3ae21", Redirection("http://google.com")))
+
+        given(qrGeneratorUseCase.create("58f3ae21")).willAnswer{ QRCode("0a9143c7","58f3ae21",null)}
+
+        mockMvc.perform(post("/api/link")
+            .param("url", "http://google.com")
+            .param("qr", "true")
+            .contentType(MediaType.APPLICATION_FORM_URLENCODED_VALUE))
+            .andDo(print())
+            .andExpect(status().isCreated)
+            .andExpect(redirectedUrl("http://localhost/tiny-58f3ae21"))
+            .andExpect(jsonPath("$.url").value("http://localhost/tiny-58f3ae21"))
+            .andExpect(jsonPath("$.qr").value("http://localhost/qrcode-0a9143c7"))
+    }
+    @Test
+    fun `image returns a qr image valid`() {
+
+        given(createShortUrlUseCase.create(
+            url = "http://google.com",
+            data = ShortUrlProperties(ip = "127.0.0.1"),
+        )).willReturn(ShortUrl("58f3ae21", Redirection("http://google.com")))
+
+        given(qrGeneratorUseCase.create("58f3ae21")).willAnswer{ QRCode("0a9143c7","58f3ae21",null)}
+
+        given(qrImageUseCase.image("0a9143c7")).willAnswer{ QRCode("0a9143c7","58f3ae21",null)}
+
+        mockMvc.perform(get("/qrcode-0a9143c7")
+            .param("id", "0a9143c7")
+            .contentType(MediaType.IMAGE_JPEG_VALUE))
+            .andDo(print())
+            .andExpect(status().isOk)
+
+    }
+    @Test
+    fun `image returns a non valid qr image`() {
+        given(qrImageUseCase.image("aaaaaaaa")).willAnswer{ throw QRCodeUriNotFoundException("aaaaaaaa", " is not reachable")}
+
+        mockMvc.perform(get("/qrcode-aaaaaaaa"))
+            .andExpect(status().isBadRequest)
+            .andExpect(jsonPath("$.statusCode").value(400))
+    }
 
 
 
