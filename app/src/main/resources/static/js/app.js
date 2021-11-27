@@ -33,9 +33,10 @@ $(document).ready(
                               console.log("Activadooo")
                               $('#imageQR').show();
                               $('#qrurlbuena').attr('href', msg.qr);
+                              $("#qrurlbuena").text(msg.qr);
                         }else{
                             $('#imageQR').hide();
-                            alert("Error")
+
                         }
 
                     },
@@ -51,9 +52,9 @@ $(document).ready(
         //Para cargar la imagen del qr al pulsar sobre su url
         $('#qrurlbuena').click(
         function(event) {
-            alert("/qrcode-" + $("#qrurlbuena" ).prop( "href").split("qrcode-").pop())
+           // alert("/qrcode-" + $("#qrurlbuena" ).prop( "href").split("qrcode-").pop())
             event.preventDefault();
-            alert($("#qrurlbuena" ).prop( "href").split("qrcode-").pop())
+            //alert($("#qrurlbuena" ).prop( "href").split("qrcode-").pop())
             var ref = $("#qrurlbuena" ).prop( "href")
             $.ajax({
                 type : "GET",
@@ -65,7 +66,7 @@ $(document).ready(
                      );
                 },
                 error : function() {
-                   alert("error")
+                  // alert("errooooor")
                 }
 
             });

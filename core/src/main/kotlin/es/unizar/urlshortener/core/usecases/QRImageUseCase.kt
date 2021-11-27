@@ -15,7 +15,7 @@ interface QRImageUseCase {
 /**
  * Implementation of [QRImageUseCaseImpl].
  */
-class QRImageUseCaseImpl(
+class QRImageUseCaseImpl (
     private val shortUrlRepository: ShortUrlRepositoryService,
     private val qrCodeRepository: QRCodeRepositoryService,
 ) : QRImageUseCase {
@@ -27,16 +27,15 @@ class QRImageUseCaseImpl(
         //search for qrcode in DB
         val qrcode = qrCodeRepository.findByKey(id)
 
-        if (qrcode==null) throw RedirectionNotFound(id)
+       if (qrcode==null)throw QRCodeUriNotFoundException(id, " is not reachable")
         else{
-            println("HASHH: "+id)
-
+            println("hola")
         }
         //search for shorturl uri in DB
         val shortUrl = shortUrlRepository.findByKey(qrcode.ShortUrlhash)
         //does not exist
-        println("HASHH: "+id)
-        if (shortUrl==null) throw RedirectionNotFound(id)
+
+        if (shortUrl==null) throw QRCodeUriNotFoundException(qrcode.ShortUrlhash, " is not reachable")
 
         //if it exists, return bytes sec
         else {

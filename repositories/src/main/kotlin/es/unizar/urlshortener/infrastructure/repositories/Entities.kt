@@ -52,7 +52,7 @@ class QRCodeEntity(
     val hash: String,
     val urlhash: String,
     @Column(name="byteqr", length = 100000)
-    val byteqr:ByteArray,
+    val byteqr:ByteArray? = null,
 
     val created: OffsetDateTime,
 

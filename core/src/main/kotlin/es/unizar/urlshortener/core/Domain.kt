@@ -28,7 +28,7 @@ data class ShortUrl(
 data class QRCode(
     val qrhash: String,
     val ShortUrlhash: String,
-    val qr: ByteArray,
+    val qr: ByteArray? =null,
     val created: OffsetDateTime = OffsetDateTime.now()
 )
 /**
