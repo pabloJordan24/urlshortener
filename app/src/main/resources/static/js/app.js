@@ -47,7 +47,33 @@ $(document).ready(
             });
         });
 
-        /*$("#shortenerCSV").submit(
+        function download(filename, text) {
+            var element = document.createElement('a');
+            element.setAttribute('href', 'data:text/csv;charset=utf-8,' + encodeURIComponent(text));
+            element.setAttribute('download', filename);
+
+            element.style.display = 'none';
+            document.body.appendChild(element);
+
+            element.click();
+
+            document.body.removeChild(element);
+        }
+
+        const input = document.querySelector('input[type="file"]')
+        var lines
+        input.addEventListener('change', function (e) {
+        console.log(input.files)
+        const reader = new FileReader()
+        reader.onload = function () {
+            console.log(reader.result)
+            lines = reader.result.split('\n')
+            console.log(lines)
+        }
+        reader.readAsText(input.files[0])
+        }, false)
+
+        $("#shortenerCSV").submit(
             function(event) {
                 event.preventDefault();
                 $.ajax({
@@ -60,13 +86,48 @@ $(document).ready(
                     cache: false,
                     success: function (res) {
                         console.log(res);
-                        //window.open("http://localhost:8080/csv/download")
+                        var host = "ws://localhost:8080/csv/progress";
+                        var wSocket = new WebSocket(host);
+                        var browserSupport = ("WebSocket" in window) ? true : false;
+
+                        function initializeReception()
+                        {
+                            if (browserSupport)
+                            {
+                                wSocket.onopen = function ()
+                                {
+
+                                };
+                            } else
+                            {
+                                // No hay soporte, posiblemente un navegador obsoleto
+                                alert("WebSocket no es soportado en su browser. Utilice uno moderno.");
+                            }
+                        };
+
+                        wSocket.onmessage = onMessage;
+
+                         function onMessage(evt) {
+                            var received_msg = evt.data;
+                            console.log(received_msg);
+                            if (received_msg == "Send me the URLs") {
+                                addMsg(lines[0]);
+                                //download("shortenedFile.csv", lines[0]);
+                            }
+                        };
+
+                        function addMsg(message) {
+                            wSocket.send(message);
+                        };
                     },
                     error: function (err) {
                         console.error(err);
                     }
                 });
-            });*/
+            });
+
+            function readCSV(file) {
+
+            };
     }
-    
 );
