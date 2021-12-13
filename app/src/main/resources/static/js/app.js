@@ -3,6 +3,7 @@ $(document).ready(
         $("#shortener").submit(
             function(event) {
                 event.preventDefault();
+                //alert($(this).serialize())
                 $.ajax({
                     type : "POST",
                     url : "/api/link",
@@ -29,7 +30,7 @@ $(document).ready(
             //alert($(this).serialize().split("tiny-").pop())
             $.ajax({
                 type : "GET",
-                url : "/info/"+$(this).serialize().split("tiny-").pop(),
+                url : "/"+$(this).serialize().split("tiny-").pop()+".json",
                 success : function(response) {
                     $("#resultInfo").html(
                         "<div class='alert alert-info lead'>"
@@ -46,5 +47,4 @@ $(document).ready(
             });
         });
     }
-    
 );
