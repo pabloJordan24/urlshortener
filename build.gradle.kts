@@ -31,7 +31,14 @@ subprojects {
     }
 }
 
-project(":core") { }
+project(":core") {
+    apply(plugin="org.springframework.boot")
+    apply(plugin="io.spring.dependency-management")
+    dependencies {
+        "implementation" ("org.springframework.boot:spring-boot-starter")
+        "implementation"("io.github.microutils:kotlin-logging-jvm:2.0.10")
+    }
+}
 
 project(":repositories") {
     apply(plugin = "org.springframework.boot")

@@ -1,8 +1,11 @@
 package es.unizar.urlshortener.infrastructure.delivery
 
+import es.unizar.urlshortener.core.ClickProperties
 import es.unizar.urlshortener.core.ShortUrlProperties
 import es.unizar.urlshortener.core.usecases.CreateCsvShortUrlUseCase
 import es.unizar.urlshortener.core.usecases.CreateShortUrlUseCase
+import es.unizar.urlshortener.core.usecases.LogClickUseCase
+import es.unizar.urlshortener.core.usecases.RedirectUseCase
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.core.io.ByteArrayResource
@@ -16,6 +19,7 @@ import org.springframework.web.bind.annotation.*
 import org.springframework.web.multipart.MultipartFile
 import org.springframework.web.socket.config.annotation.EnableWebSocket
 import org.springframework.web.socket.server.standard.ServerEndpointExporter
+import java.net.URI
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -46,6 +50,8 @@ interface UrlCsvShortenerController {
  */
 @RestController
 class UrlCsvShortenerControllerImpl(
+    val redirectUseCase: RedirectUseCase,
+    val logClickUseCase: LogClickUseCase,
     val createCsvShortUrlUseCase: CreateCsvShortUrlUseCase,
     val createShortUrlUseCase: CreateShortUrlUseCase
 ) : UrlCsvShortenerController {
