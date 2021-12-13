@@ -2,6 +2,7 @@ package es.unizar.urlshortener.core.usecases
 
 import es.unizar.urlshortener.core.Redirection
 import es.unizar.urlshortener.core.RedirectionNotFound
+import es.unizar.urlshortener.core.NotReachableException
 import es.unizar.urlshortener.core.ShortUrlRepositoryService
 
 /**
@@ -20,9 +21,19 @@ interface RedirectUseCase {
 class RedirectUseCaseImpl(
     private val shortUrlRepository: ShortUrlRepositoryService
 ) : RedirectUseCase {
-    override fun redirectTo(key: String) = shortUrlRepository
+    /*override fun redirectTo(key: String) = shortUrlRepository
         .findByKey(key)
         ?.redirection
-        ?: throw RedirectionNotFound(key)
-}
+        ?: throw RedirectionNotFound(key)*/
 
+    override fun redirectTo(key: String) : Redirection {
+        val su = shortUrlRepository.findByKey(key)
+        //su does not exist
+        if (su==null) throw RedirectionNotFound(key)
+        //su has not been validated yet
+        if (su.properties.safe!=true) throw NotReachableException(key, " not validated yet")
+
+        return su.redirection
+
+    }
+}

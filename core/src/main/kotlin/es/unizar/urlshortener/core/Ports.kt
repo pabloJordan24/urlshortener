@@ -45,4 +45,11 @@ interface QRService {
     fun qr(url: String): String
 }
 
-//crear el servicio de URL reachable aquí
+/**
+  * [ReachableService] is the port to the service that checks if an url is reachable so it can be shortened.
+  *
+  * **Note**: It is a design decision to create this port. It could be part of the core .
+  */
+ interface ReachableService {
+     fun isReachable(url: String): Boolean
+ } 
