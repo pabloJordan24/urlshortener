@@ -209,7 +209,7 @@ class UrlShortenerControllerImpl(
 
     @GetMapping("/{hash}.json")
     override fun getURLinfo(@PathVariable hash: String): ResponseEntity<ShortUrlInfoData> {
-        infoShortUrlUseCase.info(hash).let {
+        infoShortUrlUseCase.showStats(hash).let {
             val h = HttpHeaders()
             val response = ShortUrlInfoData (numClicks = it.clicks, creationDate=it.created, uriDestino=URI.create(it.uri))
             return ResponseEntity<ShortUrlInfoData>(response, h, HttpStatus.OK)
