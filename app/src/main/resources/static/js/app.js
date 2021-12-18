@@ -64,6 +64,7 @@ $(document).ready(
         var lines
         input.addEventListener('change', function (e) {
         console.log(input.files)
+        console.log(input.files[0].name)
         const reader = new FileReader()
         reader.onload = function () {
             console.log(reader.result)
@@ -89,6 +90,8 @@ $(document).ready(
                         var host = "ws://localhost:8080/csv/progress";
                         var wSocket = new WebSocket(host);
                         var browserSupport = ("WebSocket" in window) ? true : false;
+                        var ipIterator = 0;
+                        var ipResult = "";
 
                         function initializeReception()
                         {
@@ -111,8 +114,32 @@ $(document).ready(
                             var received_msg = evt.data;
                             console.log(received_msg);
                             if (received_msg == "Send me the URLs") {
-                                addMsg(lines[0]);
-                                //download("shortenedFile.csv", lines[0]);
+                                $("#resultCSV").html("<label></label>");
+                                if(lines.length == ipIterator) {
+                                    addMsg("There are no more URLs");
+                                    download("shortened_" + input.files[0].name, ipResult);
+                                } else {
+                                    addMsg(lines[ipIterator]);
+                                    ipIterator++;
+                                }
+                            } else {
+                                if (received_msg[0] == ",") {
+                                    ipResult = ipResult + "\n";
+                                } else {
+                                    ipResult = ipResult + received_msg + "\n";
+                                }
+                                var porcentaje = (ipIterator)*(100/lines.length)
+                                if(lines.length == ipIterator) {
+                                    $("#resultCSV").html(
+                                        "<label for=file>Shortening progress:</label><progress id=file max=100 value=100> 100% </progress>");
+                                    addMsg("There are no more URLs");
+                                    download("shortened_" + input.files[0].name, ipResult);
+                                } else {
+                                    $("#resultCSV").html(
+                                        "<label for=file>Shortening progress:</label><progress id=file max=100 value=" + porcentaje + ">" + porcentaje + "% </progress>");
+                                    addMsg(lines[ipIterator]);
+                                    ipIterator++;
+                                }
                             }
                         };
 
@@ -122,12 +149,10 @@ $(document).ready(
                     },
                     error: function (err) {
                         console.error(err);
+                        $("#resultCSV").html(
+                            "<div class='alert alert-danger lead'>ERROR</div>");
                     }
                 });
             });
-
-            function readCSV(file) {
-
-            };
     }
 );

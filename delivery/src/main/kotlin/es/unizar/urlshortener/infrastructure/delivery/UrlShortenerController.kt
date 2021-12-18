@@ -106,10 +106,14 @@ class UrlShortenerControllerImpl(
             url = data.url,
             data = ShortUrlProperties(
                 ip = request.remoteAddr,
-                sponsor = data.sponsor
+                sponsor = data.sponsor,
+                safe = false
             )
         ).let {
             //println(it.hash)
+            val userAgent = request.getHeader("User-Agent")
+            println(userAgent)
+
             val h = HttpHeaders()
             val url = linkTo<UrlShortenerControllerImpl> { redirectTo(it.hash, request) }.toUri()
             h.location = url
