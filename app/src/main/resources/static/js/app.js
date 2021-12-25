@@ -16,6 +16,7 @@ $(document).ready(
                     type : "POST",
                     url : "/api/link",
                     data : {"url":uridec,"qr":checked},
+
                     success : function(msg, status, request) {
 
                         console.log(request)
@@ -40,6 +41,7 @@ $(document).ready(
                         }
 
                     },
+
                     error : function() {
                         $("#result").html(
                             "<div class='alert alert-danger lead'>ERROR</div>");
@@ -57,7 +59,7 @@ $(document).ready(
             //alert($("#qrurlbuena" ).prop( "href").split("qrcode-").pop())
             var ref = $("#qrurlbuena" ).prop( "href")
             $.ajax({
-                type : "GET",
+               type : "GET",
                 url : "/qrcode-" + $("#qrurlbuena" ).prop( "href").split("qrcode-").pop(),
                 success : function(response) {
                      window.open(

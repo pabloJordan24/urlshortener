@@ -34,7 +34,7 @@ class RestResponseEntityExceptionHandler : ResponseEntityExceptionHandler() {
     @ResponseBody
     @ExceptionHandler(value = [QRCodeUriNotFoundException::class])
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    protected fun uriNotReachable(ex: QRCodeUriNotFoundException) = ErrorMessageReachableQR(HttpStatus.BAD_REQUEST.value(), ex.message)
+    protected fun qrNotFound(ex: QRCodeUriNotFoundException) = ErrorMessageReachableQR(HttpStatus.BAD_REQUEST.value(), ex.message)
 }
 
 data class ErrorMessage(

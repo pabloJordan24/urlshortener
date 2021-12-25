@@ -21,6 +21,7 @@ class ApplicationConfiguration(
     @Autowired val qrCodeEntityRepository: QRCodeEntityRepository,
 
 
+
     ) {
     @Bean
     fun clickRepositoryService() = ClickRepositoryServiceImpl(clickEntityRepository)
@@ -54,5 +55,8 @@ class ApplicationConfiguration(
 
     @Bean
     fun qrImageUseCase() = QRImageUseCaseImpl(shortUrlRepositoryService(), qrCodeRepositoryService())
+
+    @Bean
+    fun createQRURLUseCase() = CreateQRURLUseCaseImpl(hashService())
 
 }
