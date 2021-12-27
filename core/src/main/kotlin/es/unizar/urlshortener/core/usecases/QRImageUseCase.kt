@@ -35,7 +35,7 @@ class QRImageUseCaseImpl (
         val shortUrl = shortUrlRepository.findByKey(qrcode.ShortUrlhash)
         //does not exist
 
-        if (shortUrl==null) throw QRCodeUriNotFoundException(qrcode.ShortUrlhash, " is not reachable")
+        if (shortUrl==null) throw QRCodeUriNotFoundException(qrcode.ShortUrlhash,  " uri de destino no validada todavía")
 
         //if it exists, return bytes sec
         else {

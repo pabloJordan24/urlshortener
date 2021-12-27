@@ -6,11 +6,10 @@ import es.unizar.urlshortener.core.usecases.*
 import org.springframework.hateoas.server.mvc.linkTo
 import org.springframework.http.*
 import org.springframework.web.bind.annotation.*
-import java.awt.image.BufferedImage
 import java.net.URI
-import java.time.OffsetDateTime
+import java.util.concurrent.*
 import javax.servlet.http.HttpServletRequest
-import javax.swing.text.html.ImageView
+import kotlin.concurrent.thread
 
 
 /**
@@ -33,6 +32,11 @@ interface UrlShortenerController {
     fun shortener(data: ShortUrlDataIn, request: HttpServletRequest): ResponseEntity<ShortUrlDataOut>
 
     fun redirectQr(id: String, request: HttpServletRequest): ResponseEntity<ByteArray>
+
+    var colaQR: LinkedBlockingQueue<Runnable>
+
+    var pool: ThreadPoolExecutor
+    var inicio: ThreadPoolExecutor
 
 }
 
@@ -57,6 +61,33 @@ data class ShortUrlDataOut(
     )
 
 
+
+//Crea el QR
+class TareaCrearQR (
+    val urlhash: String,
+    val qrhash: String,
+    val qrGeneratorUseCase: QRGeneratorUseCase,
+) : Runnable {
+    override fun run() {
+        //meter aquí en vez del sleep el servicio de comprobar la alcanzabilidad
+        Thread.sleep(5_000)
+        qrGeneratorUseCase.create(urlhash,qrhash)
+    }
+}
+
+//Lee la cola y ejecuta la tarea leída
+class ManageQueue (
+    val executor: Executor,
+    var cola: LinkedBlockingQueue<Runnable>
+) : Runnable {
+    override fun run() {
+        while(true) {
+            val t = cola.take()
+            executor.execute(t)
+        }
+    }
+}
+
 /**
  * The implementation of the controller.
  *
@@ -68,11 +99,17 @@ class UrlShortenerControllerImpl(
     val logClickUseCase: LogClickUseCase,
     val createShortUrlUseCase: CreateShortUrlUseCase,
     val qrGeneratorUseCase: QRGeneratorUseCase,
-    val qrImageUseCase: QRImageUseCase
+    val qrImageUseCase: QRImageUseCase,
+    val createQRURLUseCase: CreateQRURLUseCase,
 ) : UrlShortenerController {
 
+    override var colaQR = LinkedBlockingQueue<Runnable>()
+    override var inicio = ThreadPoolExecutor(1, 1, 0L, TimeUnit.MILLISECONDS, colaQR)
+    override var pool = ThreadPoolExecutor(2, 2, 0L, TimeUnit.MILLISECONDS, colaQR)
 
-
+    init{
+        inicio.execute(ManageQueue(pool,colaQR))
+    }
     @GetMapping("/tiny-{id:.*}")
     override fun redirectTo(@PathVariable id: String, request: HttpServletRequest): ResponseEntity<Void> =
         redirectUseCase.redirectTo(id).let {
@@ -101,14 +138,27 @@ class UrlShortenerControllerImpl(
 
             var uriqr: URI? = null
 
-            if (data.qr){
 
-                var q = qrGeneratorUseCase.create(
+            if (data.qr){
+                //CREAMOS EL HASH DEL QR PUES NO SUPONE MUCHO COSTE COMPUTACIONAL
+                var qrhash = createQRURLUseCase.create(
                     data = it.hash
                 )
-
-                uriqr = linkTo<UrlShortenerControllerImpl> { redirectQr(q.qrhash, request) }.toUri()
+                uriqr = linkTo<UrlShortenerControllerImpl> { redirectQr(qrhash, request) }.toUri()
                 h.set("qr", uriqr.toString());
+                //METO TAREA CREAR QR EN LA COLA
+
+                val tareaQR = TareaCrearQR(it.hash,qrhash, qrGeneratorUseCase)
+                colaQR.put(tareaQR)
+
+                /*Crea el QR asociado a ese HASH
+                thread {
+                    Thread.sleep(10000)
+                    qrGeneratorUseCase.create(
+                        data = it.hash
+                    )
+                    println("FIN")
+                }*/
 
             }
 
@@ -120,6 +170,11 @@ class UrlShortenerControllerImpl(
                 qr = uriqr
             )
             ResponseEntity<ShortUrlDataOut>(response, h, HttpStatus.CREATED)
+            /*println("ESPERANDO")
+            Thread.sleep(10000)
+            println("FIN ESPERANDO")
+            ResponseEntity<ShortUrlDataOut>(response, h, HttpStatus.CREATED)*/
+
         }
 
     @GetMapping("/qrcode-{id:.*}" , produces = [MediaType.IMAGE_JPEG_VALUE])

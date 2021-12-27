@@ -9,7 +9,7 @@ import es.unizar.urlshortener.core.*
  */
 
 interface QRGeneratorUseCase {
-    fun create(data: String,): QRCode
+    fun create(data: String,qrdata: String): QRCode
 }
 
 /**
@@ -20,23 +20,24 @@ class QRGeneratorUseCaseImpl(
     private val qrService: QRService,
     private val hashService: HashService
 ) : QRGeneratorUseCase {
-    override fun create(data: String): QRCode {
-        println("VAMOS A ENVIAR ???? "+data)
+    override fun create(data: String, qrdata: String): QRCode {
+        println("VAMOS A ENVIAR ???? "+qrdata)
 
 
         var qrc = qrService.qr("http://localhost/" + data)
-        var hashqr = hashService.hasUrl("http://localhost/" + data)
-        var qrCode = qrCodeRepository.findByKey(hashqr)
+       // var hashqr = hashService.hasUrl("http://localhost/" + data)
+        var qrCode = qrCodeRepository.findByKey(qrdata)
 
         if(qrCode == null){
             println("NO EXISTE")
             qrCode = QRCode(
-                qrhash = hashService.hasUrl("http://localhost/" + data),
+                //qrhash = hashService.hasUrl("http://localhost/" + data),
+                qrhash = qrdata,
                 ShortUrlhash = data,
                 qr = qrService.qrbytes(qrc)
             )
             println("QRHASSSSSS: "+ qrCode.qr)
-            if ((qrCode.qr == null) || (qrCode.qrhash == null) || (qrCode.ShortUrlhash == null)) throw QRCodeUriNotFoundException(qrCode.qrhash, " is not reachable")
+            if ((qrCode.qr == null) || (qrCode.qrhash == null) || (qrCode.ShortUrlhash == null)) throw QRCodeUriNotFoundException(qrCode.qrhash, " uri de destino no validada todavía")
             qrCodeRepository.save(qrCode)
         }else{
             println("EXISTE")
