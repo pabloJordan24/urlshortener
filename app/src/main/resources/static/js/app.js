@@ -87,11 +87,12 @@ $(document).ready(
                     cache: false,
                     success: function (res) {
                         console.log(res);
-                        var host = "ws://localhost:8080/csv/progress";
+                        var host = "ws://localhost:8080/csv/progress/" +  res;
                         var wSocket = new WebSocket(host);
                         var browserSupport = ("WebSocket" in window) ? true : false;
                         var ipIterator = 0;
                         var ipResult = "";
+                        var htmlList = "";
 
                         function initializeReception()
                         {
@@ -129,14 +130,24 @@ $(document).ready(
                                     ipResult = ipResult + received_msg + "\n";
                                 }
                                 var porcentaje = (ipIterator)*(100/lines.length)
+                                var urlacortada = received_msg.split(',');
+                                if (urlacortada[1][0] == "[") {
+                                    if (urlacortada[1][1] != "]") {
+                                        htmlList = htmlList + "<div class='alert alert-danger lead'>" + urlacortada[1] + "</div>";
+                                    }
+                                } else {
+                                    htmlList = htmlList + "<div class='alert alert-success lead'><div><a target='_blank' href='" + urlacortada[0] + "'>" + urlacortada[0] + "</a></div><a target='_blank' href='" + urlacortada[1] + "'>" + urlacortada[1] + "</a></div>";
+                                }
                                 if(lines.length == ipIterator) {
                                     $("#resultCSV").html(
-                                        "<label for=file>Shortening progress:</label><progress id=file max=100 value=100> 100% </progress>");
+                                        "<label for=file>Shortening progress:</label><progress id=file max=100 value=100> 100% </progress>" +
+                                        htmlList);
                                     addMsg("There are no more URLs");
                                     download("shortened_" + input.files[0].name, ipResult);
                                 } else {
                                     $("#resultCSV").html(
-                                        "<label for=file>Shortening progress:</label><progress id=file max=100 value=" + porcentaje + ">" + porcentaje + "% </progress>");
+                                        "<label for=file>Shortening progress:</label><progress id=file max=100 value=" + porcentaje + ">" + porcentaje + "% </progress>" +
+                                        htmlList);
                                     addMsg(lines[ipIterator]);
                                     ipIterator++;
                                 }
