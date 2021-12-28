@@ -147,7 +147,7 @@ class UrlShortenerControllerImpl(
                 uriqr = linkTo<UrlShortenerControllerImpl> { redirectQr(qrhash, request) }.toUri()
                 h.set("qr", uriqr.toString());
                 //METO TAREA CREAR QR EN LA COLA
-
+                println("tiny-"+it.hash)
                 val tareaQR = TareaCrearQR(it.hash,qrhash, qrGeneratorUseCase)
                 colaQR.put(tareaQR)
 

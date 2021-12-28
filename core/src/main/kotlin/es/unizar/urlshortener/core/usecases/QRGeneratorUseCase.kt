@@ -22,9 +22,13 @@ class QRGeneratorUseCaseImpl(
 ) : QRGeneratorUseCase {
     override fun create(data: String, qrdata: String): QRCode {
         println("VAMOS A ENVIAR ???? "+qrdata)
-
-
-        var qrc = qrService.qr("http://localhost/" + data)
+        var port = 8080
+        var dosPts = ":"
+        var dosPtsS = dosPts.toString()
+        var guion = "-"
+        var guionS = guion.toString()
+        var portS = port.toString()
+        var qrc = qrService.qr("http://localhost"+dosPtsS+portS+"/tiny" +guion+ data)
        // var hashqr = hashService.hasUrl("http://localhost/" + data)
         var qrCode = qrCodeRepository.findByKey(qrdata)
 

@@ -20,6 +20,7 @@ class CreateQRURLUseCaseImpl(
 ) : CreateQRURLUseCase {
     override fun create(data: String): String {
        //Genero el hash y ya el thread comprueba en su caso de uso si existe o si no
-        return hashService.hasUrl("http://localhost/" + data)
+
+        return hashService.hasUrl("http://localhost/tiny-" + data)
     }
 }
