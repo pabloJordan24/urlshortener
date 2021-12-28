@@ -31,6 +31,7 @@ import java.util.concurrent.Executor
 import java.util.concurrent.LinkedBlockingQueue
 import javax.servlet.http.HttpServletRequest
 import javax.websocket.*
+import javax.websocket.server.PathParam
 import javax.websocket.server.ServerEndpoint
 
 
@@ -51,7 +52,7 @@ class WebSocketConfig {
     fun serverEndpointExporter(): ServerEndpointExporter = ServerEndpointExporter()
 }
 
-@ServerEndpoint("/csv/progress")
+@ServerEndpoint("/csv/progress/{clientIp}")
 @Component
 class CsvEndpoint() {
 
@@ -71,12 +72,13 @@ class CsvEndpoint() {
     }
 
     @OnMessage
-    fun onMsg(message: String, session: Session) {
+    fun onMsg(@PathParam("clientIp") clientIp : String, message: String, session: Session) {
         println("Server Message ... Session ${session.id}")
         println("Server received $message")
+        println(clientIp)
         if (message != "There are no more URLs") {
                 with(session.asyncRemote) {
-                    sendText(shortener(message))
+                    sendText(shortener(message, clientIp))
                 }
         } else {
             session.close(CloseReason(CloseReason.CloseCodes.NORMAL_CLOSURE, "Alright then, goodbye!"))
@@ -88,12 +90,12 @@ class CsvEndpoint() {
         println("Session ${session.id} closed because of ${errorReason.javaClass.name}")
     }
 
-    fun shortener(originalUrl: String): String {
+    fun shortener(originalUrl : String, remoteAddr : String): String {
         try {
             createShortUrlUseCase.create(
                 url = originalUrl,
                 data = ShortUrlProperties(
-                    ip = "0:0:0:0:0:0:0:1",
+                    ip = remoteAddr,
                     sponsor = null
                 )
             ).let {
