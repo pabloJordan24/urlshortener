@@ -141,13 +141,13 @@ $(document).ready(
                                 if(lines.length == ipIterator) {
                                     $("#resultCSV").html(
                                         "<label for=file>Shortening progress:</label><progress id=file max=100 value=100> 100% </progress>" +
-                                        htmlList);
+                                        "<div style='overflow-y:auto; height:300px;'>" + htmlList + "</div>");
                                     addMsg("There are no more URLs");
                                     download("shortened_" + input.files[0].name, ipResult);
                                 } else {
                                     $("#resultCSV").html(
                                         "<label for=file>Shortening progress:</label><progress id=file max=100 value=" + porcentaje + ">" + porcentaje + "% </progress>" +
-                                        htmlList);
+                                        "<div style='overflow-y:auto; height:300px;'>" + htmlList + "</div>");
                                     addMsg(lines[ipIterator]);
                                     ipIterator++;
                                 }
