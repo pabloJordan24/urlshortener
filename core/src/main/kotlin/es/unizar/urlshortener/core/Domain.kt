@@ -37,7 +37,7 @@ data class Redirection(
 data class ShortUrlProperties(
     val ip: String? = null,
     val sponsor: String? = null,
-    val safe: Boolean = true,
+    var safe: String = "not validated",
     val owner: String? = null,
     val country: String? = null
 )
@@ -60,4 +60,15 @@ data class ShortUrlInfo(
     val clicks: Int,
     val created: String,
     val uri: String
+)
+
+/**
+ * A [QRCode] is the mapping between a remote url identified by [ShortUrl] and 
+ * a local QR code identified by [hash].
+ */
+data class QRCode(
+    val qrhash: String,
+    val ShortUrlhash: String,
+    val qr: ByteArray? =null,
+    val created: OffsetDateTime = OffsetDateTime.now()
 )
