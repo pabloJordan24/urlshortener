@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <title>URL Shortener</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" type="text/css"
+          href="webjars/bootstrap/3.3.5/css/bootstrap.min.css" />
+    <script type="text/javascript" src="webjars/jquery/2.1.4/jquery.min.js"></script>
+    <script type="text/javascript"
+            src="webjars/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="js/app.js"></script>
+    <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+</head>
+<body>
+<div class="container-full">
+    <div class="row">
+        <div class="col-lg-12 text-center">
+            <h1>URL Shortener</h1>
+            <p class="lead">A front-end example page for the project</p>
+            <br>
+            <form class="col-lg-12" role="form" id="shortener" action="">
+                <div class="input-group input-group-lg col-sm-offset-4 col-sm-4">
+                    <input type="text" class="center-block form-control input-lg"
+                           title="Enter a URL" placeholder="Enter a URL" name="url">
+                    <span class="input-group-btn"><button
+                            class="btn btn-lg btn-primary" type="submit">Short me!</button></span>
+                </div>
+                <div class="form-check">
+                    <input type="checkbox" class="form-check-input" id="qrCheck">
+                    <label class="form-check-label" for="qrCheck">Check me out</label>
+                </div>
+            </form>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-lg-12 text-center">
+            <div class="col-sm-offset-4 col-sm-4 text-center">
+                <br />
+                <div id="result" />
+            </div>
+        </div>
+    </div>
+    <br/>
+    <div class="row">
+        <div class="col-lg-12 text-center">
+            <div id="imageQR" class="col-sm-offset-4 col-sm-4 text-center">
+                <br />
+                <p>QR URL</p>
+                <div class='alert alert-success lead'>
+                    <a id="qrurlbuena" target="_blank">SHOWQRCODE</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <br />
+
+    <div class="row">
+        <div class="col-lg-12 text-center">
+            <p class="lead">Want to know information about a tiny URL?</p>
+            <br>
+            <form class="col-lg-12" role="form" id="infoShortUrl" action="">
+                <div class="input-group input-group-lg col-sm-offset-4 col-sm-4">
+                    <input type="text" class="center-block form-control input-lg"
+                           title="Enter the shortened URL" placeholder="Enter your shortened URL" name="shortUrlBox">
+                    <span class="input-group-btn"><button
+                            class="btn btn-lg btn-primary" type="submit">Info!</button></span>
+                </div>
+            </form>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-lg-12 text-center">
+            <div class="col-sm-offset-4 col-sm-4 text-center">
+                <br />
+                <div id="resultInfo" />
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-12 text-center">
+            <br>
+            <p class="lead">Want to shorten multiple URL? Upload a CSV file!</p>
+            <br>
+            <form class="col-lg-12" role="form" id="shortenerCSV" action="http://localhost:8080/csv" method="POST" enctype="multipart/form-data">
+                <div class="input-group input-group-lg col-sm-offset-4 col-sm-4">
+                    <input id="uploadCSV" type="file" accept=".csv" class="center-block form-control input-lg"
+                           title="Upload a CSV" placeholder="Upload a CSV" name="csv">
+                    <span class="input-group-btn"><button
+                            class="btn btn-lg btn-primary" type="submit">Short us!</button></span>
+                </div>
+            </form>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-lg-12 text-center">
+            <div class="col-sm-offset-4 col-sm-4 text-center">
+                <br />
+                <div id="resultCSV" />
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>
