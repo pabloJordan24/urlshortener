@@ -2,6 +2,7 @@ package es.unizar.urlshortener.infrastructure.delivery
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 
+import es.unizar.urlshortener.core.usecases.*
 import es.unizar.urlshortener.core.ClickProperties
 import es.unizar.urlshortener.core.ShortUrl
 import es.unizar.urlshortener.core.ShortUrlProperties
@@ -38,15 +39,6 @@ import java.util.concurrent.*
  * The specification of the controller.
  */
 interface UrlShortenerController {
-    
-    /* Thread Pool: https://developer.android.com/reference/kotlin/java/util/concurrent/Executors */
-    val executor: Executor
-
-    /* Task queue (in this case, it only proves if shortUrl is reachable). 
-     * It is defined as String type because we only need the URL´s key.
-     */
-    var colaAlcanzabilidad: LinkedBlockingQueue<Runnable>
-
     /**
      * Redirects and logs a short url identified by its [id].
      *
@@ -68,6 +60,13 @@ interface UrlShortenerController {
      */
     fun getURLinfo(hash: String): ResponseEntity<ShortUrlInfoData>
 
+    /**
+     * Redirects to image QR identified by its [id].
+     *
+     * **Note**: Delivery of use case [QRImageUseCase].
+     */
+    fun redirectQr(id: String, request: HttpServletRequest): ResponseEntity<ByteArray>
+
 }
 
 /*
@@ -75,7 +74,8 @@ interface UrlShortenerController {
  */
 data class ShortUrlDataIn(
     val url: String,
-    val sponsor: String? = null
+    val sponsor: String? = null,
+    val qr: Boolean
 )
 
 /*
@@ -83,7 +83,8 @@ data class ShortUrlDataIn(
  */
 data class ShortUrlDataOut(
     val url: URI? = null,
-    val properties: Map<String, Any> = emptyMap()
+    val properties: Map<String, Any> = emptyMap(),
+    val qr:  URI? = null
 )
 
 /*
@@ -95,45 +96,6 @@ data class ShortUrlInfoData(
     val uriDestino: URI
 )
 
-/*
- * Function that returns an executor (thread pool).
- */
-fun taskExecutor(mycorePoolSize:Int, mymaxPoolSize:Int): Executor {
-    val executor = ThreadPoolTaskExecutor() 
-    executor.corePoolSize = mycorePoolSize
-    executor.maxPoolSize = mymaxPoolSize 
-    executor.setQueueCapacity(500) 
-    executor.setThreadNamePrefix("Task-") 
-    executor.initialize()
-    return executor
-}
-
-//meter la concurrentqueue con el thread que lea de la cola
-
-class TareaComprobarUrlAlcanzable (
-    val key: String, 
-    val alcanzableUseCase: AlcanzableUseCase
-    ) : Runnable {
-    override fun run() {
-        val logger = KotlinLogging.logger {}
-        //meter aquí en vez del sleep el servicio de comprobar la alcanzabilidad
-        Thread.sleep(5_000)
-        alcanzableUseCase.esAlcanzable(key)
-        logger.info { "Tarea acabada" }
-    }
-}
-
-class ManageQueue (
-    val executor: Executor,
-    var cola: LinkedBlockingQueue<Runnable>
-) : Runnable {
-    override fun run() {
-        while(true) {
-            val t = cola.take()
-            executor.execute(t)
-        }
-    }
-}
 
 /**
  * The implementation of the controller.
@@ -146,23 +108,11 @@ class UrlShortenerControllerImpl(
     val logClickUseCase: LogClickUseCase,
     val createShortUrlUseCase: CreateShortUrlUseCase,
     val infoShortUrlUseCase: InfoShortUrlUseCase,
-    val alcanzableUseCase: AlcanzableUseCase
+    val alcanzableUseCase: AlcanzableUseCase,
+    val qrImageUseCase: QRImageUseCase,
+    val qrGeneratorUseCase: QRGeneratorUseCase,
+    val createQRURLUseCase: CreateQRURLUseCase
 ) : UrlShortenerController {
-    // Me hago un pool de threads fijo. aquellas peticiones que no se puedan atender,
-    // se encolan para que luego otro thread las pille. 
-    // En vd, esto es lo mismo que usar la bean de spring => ThreadPoolTaskExecutor()
-    //override val executor = Executors.newFixedThreadPool(2)
-
-    override val executor = taskExecutor(2,2)
-
-    override var colaAlcanzabilidad = LinkedBlockingQueue<Runnable>()
-
-    init {
-        //lanzamos un thread que inicialice nuestra cola y al thread pool que 
-        //lee de ella.
-        var lanzador = taskExecutor(1,1)
-        lanzador.execute(ManageQueue(executor,colaAlcanzabilidad))
-    }
 
     @GetMapping("/tiny-{id:.*}")
     override fun redirectTo(@PathVariable id: String, request: HttpServletRequest): ResponseEntity<Void> =
@@ -170,7 +120,6 @@ class UrlShortenerControllerImpl(
             logClickUseCase.logClick(id, ClickProperties(ip = request.remoteAddr))
             val h = HttpHeaders()
             h.location = URI.create(it.target)
-            //println("redirecttttt")
             ResponseEntity<Void>(h, HttpStatus.valueOf(it.mode))
         }
 
@@ -181,38 +130,61 @@ class UrlShortenerControllerImpl(
             data = ShortUrlProperties(
                 ip = request.remoteAddr,
                 sponsor = data.sponsor,
-                safe=false
+                safe="not validated"
             )
         ).let {
-            //println(it.hash)
             val userAgent = request.getHeader("User-Agent")
             println(userAgent)
             
             val h = HttpHeaders()
             val url = linkTo<UrlShortenerControllerImpl> { redirectTo(it.hash, request) }.toUri()
             h.location = url
-            val response = ShortUrlDataOut(
-                url = url,
-                properties = mapOf(
-                    "safe" to it.properties.safe
+            
+            var response: ShortUrlDataOut? = null
+
+            if (data.qr) {
+                //creamos el hash del qr porque no supone mucho coste computacional
+                var qrhash = createQRURLUseCase.create(
+                    data = it.hash
                 )
-            )
+                var uriqr = linkTo<UrlShortenerControllerImpl> { redirectQr(qrhash, request) }.toUri()
+                h.set("qr", uriqr.toString());
 
-            //lanzo tarea de comprobar la alcanzabilidad de la url devuelta
-            val tarea = TareaComprobarUrlAlcanzable(it.hash,alcanzableUseCase)
-            //executor.execute(tarea)
-            //en el nivel 15 -> encolamos la tarea (con el hash a comprobar).
-            colaAlcanzabilidad.put(tarea)
+                response = ShortUrlDataOut(
+                    url = url,
+                    properties = mapOf(
+                        "not validated" to it.properties.safe
+                    ),
+                    qr = uriqr
+                )
+            }
+            else {
+                response = ShortUrlDataOut(
+                    url = url,
+                    properties = mapOf(
+                        "not validated" to it.properties.safe
+                    )
+                )
+            }
 
-            ResponseEntity<ShortUrlDataOut>(response, h, HttpStatus.CREATED)
+            //devolvemos 202
+            ResponseEntity<ShortUrlDataOut>(response, h, HttpStatus.ACCEPTED)
         }
 
     @GetMapping("/{hash}.json")
     override fun getURLinfo(@PathVariable hash: String): ResponseEntity<ShortUrlInfoData> {
-        infoShortUrlUseCase.info(hash).let {
+        infoShortUrlUseCase.showStats(hash).let {
             val h = HttpHeaders()
             val response = ShortUrlInfoData (numClicks = it.clicks, creationDate=it.created, uriDestino=URI.create(it.uri))
             return ResponseEntity<ShortUrlInfoData>(response, h, HttpStatus.OK)
+        }
+    }
+
+    @GetMapping("/qrcode-{id:.*}" , produces = [MediaType.IMAGE_JPEG_VALUE])
+    override fun redirectQr(@PathVariable id: String, request: HttpServletRequest): ResponseEntity<ByteArray>{
+        qrImageUseCase.image(id).let {
+            val h = HttpHeaders()
+            return ResponseEntity<ByteArray>(it.qr, h, HttpStatus.OK)
         }
     }
 }
