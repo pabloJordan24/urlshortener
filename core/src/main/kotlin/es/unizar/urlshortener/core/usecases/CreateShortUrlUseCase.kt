@@ -55,7 +55,7 @@ class TareaComprobarUrlAlcanzable (
         } catch(ex : Exception) {
             val logger = KotlinLogging.logger {}
             logger.info { "[AL] : No es alcanzable la URI" }
-            throw ex
+            //throw ex
         }
     }
 }

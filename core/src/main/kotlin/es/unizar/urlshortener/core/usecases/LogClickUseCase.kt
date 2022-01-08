@@ -4,6 +4,7 @@ import es.unizar.urlshortener.core.Click
 import es.unizar.urlshortener.core.ClickProperties
 import es.unizar.urlshortener.core.ClickRepositoryService
 import java.util.Date
+import java.time.OffsetDateTime
 
 /**
  * Log that somebody has requested the redirection identified by a key.
@@ -23,9 +24,9 @@ class LogClickUseCaseImpl(
     override fun logClick(key: String, data: ClickProperties) {
         val cl = Click(
             hash = key,
+            created = OffsetDateTime.now(),
             properties = ClickProperties(
                 ip = data.ip
-                //colocar aquí el timestamp del click
             )
         )
         println(clickRepository.showAll())

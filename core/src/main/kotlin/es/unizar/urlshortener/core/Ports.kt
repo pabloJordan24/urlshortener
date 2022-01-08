@@ -1,6 +1,7 @@
 package es.unizar.urlshortener.core
 import java.awt.image.BufferedImage
 import java.io.ByteArrayOutputStream
+import java.time.OffsetDateTime
 
 /**
  * [ClickRepositoryService] is the port to the repository that provides persistence to [Clicks][Click].
@@ -10,6 +11,7 @@ interface ClickRepositoryService {
     fun showAll(): List<Click>
     //devuelve los clicks a ese hash
     fun countByHash(hash: String): Int 
+    fun fetchIPClient(hash: String, ofsdt: OffsetDateTime) : List<String?>
 }
 
 /**

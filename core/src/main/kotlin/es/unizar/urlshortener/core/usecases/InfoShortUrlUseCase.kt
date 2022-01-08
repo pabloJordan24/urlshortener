@@ -4,6 +4,7 @@ import es.unizar.urlshortener.core.*
 import java.util.Date
 import java.text.SimpleDateFormat
 import org.springframework.scheduling.annotation.Scheduled
+import java.time.OffsetDateTime
 
 /**
  * Given an url returns information about it.
@@ -41,13 +42,17 @@ class InfoShortUrlUseCaseImpl(
             val numClicks = clickRepository.countByHash(id)
             val created = shortUrl.created
             val target = shortUrl.redirection.target
+            var now = OffsetDateTime.now()
+            var sevenDaysAgo = now.minusDays(7L)
+            var usuariosURI_haceSieteDias = clickRepository.fetchIPClient(id,sevenDaysAgo)
 
             return ShortUrlInfo(
                 clicks=numClicks,
                 created=created.getDayOfMonth().toString()+"-"+
                 created.getMonth().toString()+"-"+
                 created.getYear().toString(),
-                uri=target
+                uri=target,
+                users=usuariosURI_haceSieteDias
             )
         }
     }
@@ -68,14 +73,23 @@ class InfoShortUrlUseCaseImpl(
             val numClicks = clickRepository.countByHash(id)
             val created = su.created
             val target = su.redirection.target
+            // *********
+            var now = OffsetDateTime.now()
+            var sevenDaysAgo = now.minusDays(7L)
+            var usuariosURI_haceSieteDias = clickRepository.fetchIPClient(id,sevenDaysAgo)
 
             val sui =  ShortUrlInfo(
                 clicks=numClicks,
                 created=created.getDayOfMonth().toString()+"-"+
                 created.getMonth().toString()+"-"+
                 created.getYear().toString(),
-                uri=target
+                uri=target,
+                users=usuariosURI_haceSieteDias
             )
+            
+            
+            println("Clicks de usuarios distintos a la shortUrl "+id+": "+usuariosURI_haceSieteDias)
+            
             stats.put(id,sui)
         }
         println("[-] -- Scheduler basico: tamanyo del hashMap -> " + stats.size)
@@ -86,9 +100,10 @@ class InfoShortUrlUseCaseImpl(
         if (sui!=null) return sui
         else throw RedirectionNotFound(id)
     }
-
-    // Usar quartz para el scheduler robusto
-    //override fun quartzScheduler(): Unit {
-    //   
-    //}
 }
+
+// *********
+// si quiero clicks en los ultimos 7 dias -> calculo el offsetdatetime de hace 
+// siete dias y llamo a la funcion fetchIpCLient. Le paso ese offset time y
+// todos los records de la bd cuyo created sea mayor/igual que el que le paso, 
+// son clicks hechos por users en los ultimos 7 dias.

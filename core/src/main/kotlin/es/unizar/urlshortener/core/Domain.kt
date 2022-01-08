@@ -59,7 +59,8 @@ data class ClickProperties(
 data class ShortUrlInfo(
     val clicks: Int,
     val created: String,
-    val uri: String
+    val uri: String,
+    val users: List<String?>
 )
 
 /**
