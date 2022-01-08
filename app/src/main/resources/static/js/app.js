@@ -38,6 +38,7 @@ $(document).ready(
                         + "<p>" + "Total number of clicks: " + response.numClicks +"</p>"
                         + "<p>" + "Date of creation: " + response.creationDate +"</p>"
                         + "<p>" + "Target URL: " + response.uriDestino +"</p>"
+                        + "<p>" + "Usuarios ultimos 7 dias: " + response.usersClicks + "</p>"
                         + "</div>"
                     );
                 },
