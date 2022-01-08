@@ -93,7 +93,8 @@ data class ShortUrlDataOut(
 data class ShortUrlInfoData(
     val numClicks: Int,
     val creationDate: String,
-    val uriDestino: URI
+    val uriDestino: URI,
+    val usersClicks: List<String?>
 )
 
 
@@ -175,7 +176,8 @@ class UrlShortenerControllerImpl(
     override fun getURLinfo(@PathVariable hash: String): ResponseEntity<ShortUrlInfoData> {
         infoShortUrlUseCase.showStats(hash).let {
             val h = HttpHeaders()
-            val response = ShortUrlInfoData (numClicks = it.clicks, creationDate=it.created, uriDestino=URI.create(it.uri))
+            val response = ShortUrlInfoData (numClicks = it.clicks, creationDate=it.created, uriDestino=URI.create(it.uri),
+            usersClicks=it.users)
             return ResponseEntity<ShortUrlInfoData>(response, h, HttpStatus.OK)
         }
     }
