@@ -29,6 +29,8 @@ subprojects {
     dependencies {
         "implementation"("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
         "implementation"("io.github.microutils:kotlin-logging-jvm:2.0.10")
+        "implementation"("io.springfox:springfox-boot-starter:3.0.0")
+        "implementation"("io.springfox:springfox-swagger-ui:3.0.0")
     }
 }
 
