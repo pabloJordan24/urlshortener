@@ -35,7 +35,21 @@ class ShortUrlEntity(
     val created: OffsetDateTime,
     val owner: String?,
     val mode: Int,
-    val safe: Boolean,
+    val safe: String,
     val ip: String?,
     val country: String?
+)
+
+/**
+ * The [QRCodeEntity] entity stores short urls.
+ */
+@Entity
+@Table(name = "qrcode")
+class QRCodeEntity(
+    @Id
+    val hash: String,
+    val urlhash: String,
+    @Column(name="byteqr", length = 100000)
+    val byteqr:ByteArray? = null,
+    val created: OffsetDateTime
 )

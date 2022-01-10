@@ -26,10 +26,14 @@ class AlcanzableUseCaseImpl(
             val esAlcanzable = reachableService.isReachable(su.redirection.target)
             if (esAlcanzable) {
                 //update record in db. Now it is reachable.
-                su.properties.safe=true
+                su.properties.safe="safe"
                 shortUrlRepository.save(su)
             }
-            else throw NotReachableException(su.redirection.target," is not reachable")
+            else {
+                su.properties.safe="not reachable"
+                shortUrlRepository.save(su)
+                throw NotReachableException(su.redirection.target," is not reachable")
+            }
         }
         else throw RedirectionNotFound(key)
     }

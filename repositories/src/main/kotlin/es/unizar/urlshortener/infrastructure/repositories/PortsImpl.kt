@@ -4,6 +4,8 @@ import es.unizar.urlshortener.core.Click
 import es.unizar.urlshortener.core.ClickRepositoryService
 import es.unizar.urlshortener.core.ShortUrl
 import es.unizar.urlshortener.core.ShortUrlRepositoryService
+import es.unizar.urlshortener.core.*
+import java.time.OffsetDateTime
 
 /**
  * Implementation of the port [ClickRepositoryService].
@@ -12,6 +14,7 @@ class ClickRepositoryServiceImpl(private val clickEntityRepository: ClickEntityR
     override fun save(cl: Click): Click = clickEntityRepository.save(cl.toEntity()).toDomain()
     override fun showAll(): List<Click> = clickEntityRepository.findAll().map {it.toDomain()}
     override fun countByHash(hash: String): Int  = clickEntityRepository.findAllByHash(hash).count()
+    override fun fetchIPClient(hash: String, ofsdt: OffsetDateTime) : List<String?> = clickEntityRepository.fetchByHash(hash,ofsdt).map {it}
 }
 
 /**
@@ -30,3 +33,13 @@ class ShortUrlRepositoryServiceImpl(private val shortUrlEntityRepository: ShortU
     override fun showAll(): List<ShortUrl> = shortUrlEntityRepository.findAll().map {it.toDomain()}
 }
 
+/**
+ * Implementation of the port [QRCodeRepositoryService].
+ */
+class QRCodeRepositoryServiceImpl(
+    private val qrcodeEntityRepository: QRCodeEntityRepository
+) : QRCodeRepositoryService {
+    override fun findByKey(id: String): QRCode? = qrcodeEntityRepository.findByHash(id)?.toDomain()
+
+    override fun save(su: QRCode): QRCode = qrcodeEntityRepository.save(su.toEntity()).toDomain()
+}

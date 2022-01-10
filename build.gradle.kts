@@ -28,10 +28,13 @@ subprojects {
     }
     dependencies {
         "implementation"("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
+        "implementation"("io.github.microutils:kotlin-logging-jvm:2.0.10")
+        "implementation"("io.springfox:springfox-boot-starter:3.0.0")
+        "implementation"("io.springfox:springfox-swagger-ui:3.0.0")
     }
 }
 
-project(":core") {
+project(":core") { 
     apply(plugin="org.springframework.boot")
     apply(plugin="io.spring.dependency-management")
     dependencies {
@@ -47,6 +50,7 @@ project(":repositories") {
     dependencies {
         "implementation"(project(":core"))
         "implementation"("org.springframework.boot:spring-boot-starter-data-jpa")
+        "implementation"("io.github.microutils:kotlin-logging-jvm:2.0.10")
     }
     tasks.getByName<BootJar>("bootJar") {
         enabled = false
@@ -65,6 +69,7 @@ project(":delivery") {
         "implementation"("commons-validator:commons-validator:1.6")
         "implementation"("com.google.guava:guava:23.0")
         "implementation"("io.github.g0dkar:qrcode-kotlin:1.1.0")
+        "implementation"("io.github.microutils:kotlin-logging-jvm:2.0.10")
         "implementation"("org.springframework.boot:spring-boot-starter-websocket")
 
         "testImplementation"("org.springframework.boot:spring-boot-starter-test")
@@ -84,8 +89,9 @@ project(":app") {
         "implementation"(project(":delivery"))
         "implementation"(project(":repositories"))
         "implementation"("org.springframework.boot:spring-boot-starter")
-        "implementation"( "org.webjars:bootstrap:3.3.5")
+        "implementation"("org.webjars:bootstrap:3.3.5")
         "implementation"("org.webjars:jquery:2.1.4")
+        "implementation"("io.github.microutils:kotlin-logging-jvm:2.0.10")
 
         "runtimeOnly"("org.hsqldb:hsqldb")
 

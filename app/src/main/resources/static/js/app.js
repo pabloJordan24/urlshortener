@@ -1,6 +1,6 @@
 $(document).ready(
     function () {
-        $("#shortener").submit(
+        /*$("#shortener").submit(
             function(event) {
                 event.preventDefault();
                 //alert($(this).serialize())
@@ -22,27 +22,95 @@ $(document).ready(
                     }
                 });
             }
-        );
+        );*/
   
+        // mostramos la info de la tiny url.
         $("#infoShortUrl").submit(
         function(event) {
             event.preventDefault();
             //alert($(this).serialize().split("tiny-").pop())
             $.ajax({
                 type : "GET",
-                url : "/info/"+$(this).serialize().split("tiny-").pop(),
+                url : "/"+$(this).serialize().split("tiny-").pop()+".json",
                 success : function(response) {
                     $("#resultInfo").html(
                         "<div class='alert alert-info lead'>"
                         + "<p>" + "Total number of clicks: " + response.numClicks +"</p>"
                         + "<p>" + "Date of creation: " + response.creationDate +"</p>"
                         + "<p>" + "Target URL: " + response.uriDestino +"</p>"
+                        + "<p>" + "Usuarios ultimos 7 dias: " + response.usersClicks + "</p>"
                         + "</div>"
                     );
                 },
                 error : function() {
                      $("#resultInfo").html(
                         "<div class='alert alert-danger lead'>ERROR</div>");
+                }
+            });
+        });
+
+        // hasta que no mostremos el QR, esta opción estará oculta.
+        $('#imageQR').hide();
+        
+        // hacemos todo el proceso de acortar la url (mirar si el checkbox está checkeado).
+        $("#shortener").submit(
+            function(event) {
+                event.preventDefault();
+                var checked=false
+                if ($("#shortener :checkbox").is(":checked")) {
+                    checked=true
+                }
+                var uridec = decodeURIComponent($(this).serialize().split("=").pop())
+                console.log(uridec)
+                
+                $.ajax({
+                    type : "POST",
+                    url : "/api/link",
+                    data : {"url":uridec, "qr":checked},
+
+                    success : function(msg, status, request) {
+                        $("#result").html(
+                            "<p>ShortUrl</p><div class='alert alert-success lead'><a target='_blank' href='"
+                            + request.getResponseHeader('Location')
+                            + "'>"
+                            + request.getResponseHeader('Location')
+                            + "</a></div>");
+
+                        if( $("#qrCheck").is(":checked") ) {
+                              $('#imageQR').show();
+                              $('#qrurlbuena').attr('href', msg.qr);
+                              $("#qrurlbuena").text(msg.qr);
+                        }else{
+                            $('#imageQR').hide();
+                        }
+                    },
+
+                    error : function() {
+                        $("#result").html(
+                            "<div class='alert alert-danger lead'>ERROR</div>");
+                        $("#qruri").html(
+                                "<div class='alert alert-danger lead'>ERROR</div>");
+                    }
+                });
+            });
+
+        //Para cargar la imagen del qr al pulsar sobre su url
+        $('#qrurlbuena').click(
+        function(event) {
+            event.preventDefault();
+            var ref = $("#qrurlbuena" ).prop( "href")
+        
+            $.ajax({
+                type : "GET",
+                url : "/qrcode-" + $("#qrurlbuena" ).prop("href").split("qrcode-").pop(),
+                success : function(response) {
+                    window.open(
+                        ref,
+                        '_blank' // <- This is what makes it open in a new window.
+                    );
+                },
+                error : function() {
+                    swal("QR not created yet!", "Please wait a few seconds...");
                 }
             });
         });
@@ -63,15 +131,15 @@ $(document).ready(
         const input = document.querySelector('input[type="file"]')
         var lines
         input.addEventListener('change', function (e) {
-        console.log(input.files)
-        console.log(input.files[0].name)
-        const reader = new FileReader()
-        reader.onload = function () {
-            console.log(reader.result)
-            lines = reader.result.split('\n')
-            console.log(lines)
-        }
-        reader.readAsText(input.files[0])
+            console.log(input.files)
+            console.log(input.files[0].name)
+            const reader = new FileReader()
+            reader.onload = function () {
+                console.log(reader.result)
+                lines = reader.result.split('\n')
+                console.log(lines)
+            }
+            reader.readAsText(input.files[0])
         }, false)
 
         $("#shortenerCSV").submit(
