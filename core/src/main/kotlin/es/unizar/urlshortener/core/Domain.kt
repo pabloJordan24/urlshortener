@@ -37,7 +37,7 @@ data class Redirection(
 data class ShortUrlProperties(
     val ip: String? = null,
     val sponsor: String? = null,
-    val safe: Boolean = true,
+    var safe: String = "not validated",
     val owner: String? = null,
     val country: String? = null
 )
@@ -51,4 +51,25 @@ data class ClickProperties(
     val browser: String? = null,
     val platform: String? = null,
     val country: String? = null
+)
+
+/**
+ * A [ShortUrlInfo] contains information about a [ShortUrl].
+ */
+data class ShortUrlInfo(
+    val clicks: Int,
+    val created: String,
+    val uri: String,
+    val users: List<String?>
+)
+
+/**
+ * A [QRCode] is the mapping between a remote url identified by [ShortUrl] and 
+ * a local QR code identified by [hash].
+ */
+data class QRCode(
+    val qrhash: String,
+    val ShortUrlhash: String,
+    val qr: ByteArray? =null,
+    val created: OffsetDateTime = OffsetDateTime.now()
 )
