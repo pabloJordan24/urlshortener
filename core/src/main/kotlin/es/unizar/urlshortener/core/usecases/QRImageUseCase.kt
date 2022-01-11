@@ -27,26 +27,30 @@ class QRImageUseCaseImpl (
         //search for qrcode in DB
         val qrcode = qrCodeRepository.findByKey(id)
 
-       if (qrcode==null)throw QRCodeUriNotFoundException(id, " is not reachable")
-        else{
-            println("hola")
-        }
-        //search for shorturl uri in DB
-        val shortUrl = shortUrlRepository.findByKey(qrcode.ShortUrlhash)
-        //does not exist
-
-        if (shortUrl==null) throw QRCodeUriNotFoundException(qrcode.ShortUrlhash,  " uri de destino no validada todavía")
-
-        //if it exists, return bytes sec
+        if (qrcode==null) throw QRCodeUriNotFoundException(id, "QR not created yet")
+        
         else {
+            //search for shorturl uri in DB
+            val shortUrl = shortUrlRepository.findByKey(qrcode.ShortUrlhash)
+            //does not exist
+            if (shortUrl!=null && shortUrl.properties.safe=="not validated") {
+                throw QRCodeUriNotFoundException(qrcode.ShortUrlhash,  "URI not validated yet")
+            }
 
-            val imgbytes = qrcode.qr
+            //if it exists and reacheable, return bytes sec
+            else {
+                if (shortUrl!=null && shortUrl.properties.safe!="safe") {
+                    throw QRCodeUriNotFoundException(qrcode.ShortUrlhash,  "URI not reachable")
+                }   
+                val imgbytes = qrcode.qr
 
-            return QRCode(
-                qrhash=  id,
-                ShortUrlhash= qrcode.ShortUrlhash,
-                qr=  imgbytes
-            )
+                return QRCode(
+                    qrhash=  id,
+                    ShortUrlhash= qrcode.ShortUrlhash,
+                    qr=  imgbytes
+                )
+            }
         }
+        
     }
 }

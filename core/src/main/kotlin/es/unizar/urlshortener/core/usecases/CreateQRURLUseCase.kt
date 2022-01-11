@@ -34,7 +34,7 @@ class TareaCrearQR (
         val logger = KotlinLogging.logger {}
         logger.info { "[QR] : Tarea crear QR empieza" }
         //meter aquí en vez del sleep el servicio de comprobar la alcanzabilidad
-        Thread.sleep(5_000)
+        Thread.sleep(4_000)
         qrGeneratorUseCase.create(urlhash,qrhash)
         logger.info { "[QR] : Tarea crear QR acabada" }
     }

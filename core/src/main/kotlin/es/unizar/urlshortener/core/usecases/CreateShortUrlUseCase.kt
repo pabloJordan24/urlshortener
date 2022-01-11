@@ -49,7 +49,7 @@ class TareaComprobarUrlAlcanzable (
             val logger = KotlinLogging.logger {}
             logger.info { "[AL] : Tarea alcanzabilidad empieza" }
             //meter aquí en vez del sleep el servicio de comprobar la alcanzabilidad
-            Thread.sleep(5_000)
+            Thread.sleep(7_000)
             alcanzableUseCase.esAlcanzable(key)
             logger.info { "[AL] : Tarea alcanzabilidad acabada" }
         } catch(ex : Exception) {
