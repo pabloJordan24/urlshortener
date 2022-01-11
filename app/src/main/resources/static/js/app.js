@@ -110,7 +110,7 @@ $(document).ready(
                     );
                 },
                 error : function() {
-                    swal("QR not created yet!", "Please wait a few seconds...");
+                    
                 }
             });
         });
